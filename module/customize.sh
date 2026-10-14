@@ -14,19 +14,31 @@ ui_print "[%] customize.sh "
 
 detect_key_press() {
 	timeout_seconds=6
-	timeout 0.5 getevent -c 0 >/dev/null 2>&1
-	read -r -t $timeout_seconds line < <(getevent -ql | awk '/KEY_VOLUME/ {print; exit}')
-	if [ $? -eq 142 ]; then
-		ui_print "[!] No key pressed within $timeout_seconds seconds. Skipping installation..."
-		return 1
-	fi
-	if echo "$line" | grep -q "KEY_VOLUMEUP"; then
-		return 0
-	else
-		ui_print "[+] Skipping reset..."
-		return 1
-	fi
+	line=$(timeout "$timeout_seconds" getevent -ql 2>/dev/null | awk '/KEY_VOLUME(UP|DOWN)/ { print; fflush(); exit }')
+	case "$line" in
+		*KEY_VOLUMEUP*) return 0 ;;
+		*KEY_VOLUMEDOWN*) ui_print "[*] Volume down selected"; return 1 ;;
+		*) ui_print "[!] No volume key detected within $timeout_seconds seconds"; return 1 ;;
+	esac
 }
+
+brand=$(getprop ro.product.brand | tr '[:upper:]' '[:lower:]')
+manufacturer=$(getprop ro.product.manufacturer | tr '[:upper:]' '[:lower:]')
+if echo "$brand $manufacturer" | grep -Eq 'oppo|oneplus|realme' && ! "$DEST_BIN_DIR/ksu_susfs" show version >/dev/null 2>&1; then
+	ui_print "[*] No working native ksu_susfs detected. Optional exact-KMI SUSFS LKM download?"
+	ui_print "[*] VOLUME UP to download and enable for next boot, DOWN to skip"
+	if detect_key_press; then
+		if sh "$MODPATH/install_susfs_lkm.sh"; then
+			mkdir -p "$PERSISTENT_DIR"
+			echo 1 > "$PERSISTENT_DIR/lkm_enabled"
+			ui_print "[+] LKM installed and enabled for next boot; reboot required"
+		else
+			ui_print "[!] LKM install failed; continuing without it"
+		fi
+	else
+		ui_print "[*] Skipping optional SUSFS LKM"
+	fi
+fi
 
 if [ -d "$PERSISTENT_DIR" ]; then
 	ui_print "[*] Have you backed up your configuration?"

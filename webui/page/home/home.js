@@ -1,5 +1,5 @@
 import { exec } from 'kernelsu-alt';
-import { basePath, moduleDirectory, filePaths, runReSuSFS, updateUIVisibility, linkRedirect } from '../../utils/util.js';
+import { basePath, moduleDirectory, filePaths, runReSuSFS, updateUIVisibility, linkRedirect, showPrompt } from '../../utils/util.js';
 import { getString } from '../../utils/language.js';
 import { addCopyToClipboardListeners } from '../../utils/docs.js';
 import { exportConfig, restoreConfig } from '../../utils/backup.js';
@@ -43,29 +43,69 @@ async function countEnabledScripts() {
 
 async function updateSummary() {
     const grid = document.getElementById('summary-grid');
+    if (!grid) return;
     grid.innerHTML = '';
 
-    for (const { key, label } of SUMMARY_FILES) {
-        const count = await countEntries(filePaths[key]);
+    const [counts, scriptCount] = await Promise.all([
+        Promise.all(SUMMARY_FILES.map(({ key }) => countEntries(filePaths[key]))),
+        countEnabledScripts(),
+    ]);
+    const tiles = SUMMARY_FILES.map(({ label }, index) => ({
+        count: counts[index],
+        label: getString(label),
+        page: 'susfs',
+    }));
+    tiles.push({
+        count: scriptCount,
+        label: getString('summary_enabled_scripts'),
+        page: 'userhub',
+    });
+
+    for (const { count, label, page } of tiles) {
         const tile = document.createElement('div');
         tile.className = 'summary-tile';
         tile.innerHTML = `
             <span class="summary-tile-count">${count}</span>
-            <span class="summary-tile-label">${getString(label)}</span>
+            <span class="summary-tile-label">${label}</span>
         `;
-        tile.onclick = () => document.querySelector('.bottom-bar-item[page="susfs"]')?.click();
+        tile.onclick = () => document.querySelector(`.bottom-bar-item[page="${page}"]`)?.click();
         grid.appendChild(tile);
     }
+}
 
-    const scriptCount = await countEnabledScripts();
-    const scriptTile = document.createElement('div');
-    scriptTile.className = 'summary-tile';
-    scriptTile.innerHTML = `
-        <span class="summary-tile-count">${scriptCount}</span>
-        <span class="summary-tile-label">${getString('summary_enabled_scripts')}</span>
-    `;
-    scriptTile.onclick = () => document.querySelector('.bottom-bar-item[page="userhub"]')?.click();
-    grid.appendChild(scriptTile);
+async function getLkmInterfaces() {
+    const result = await exec('for node in /proc/susfs_*; do [ -e "$node" ] && printf "%s\n" "${node##*/}"; done');
+    return result.stdout.trim().split(/\s+/).filter(Boolean);
+}
+
+async function updateLkmStatus() {
+    const result = await exec(`brand=$(getprop ro.product.brand | tr '[:upper:]' '[:lower:]'); maker=$(getprop ro.product.manufacturer | tr '[:upper:]' '[:lower:]'); case "\$brand \$maker" in *oppo*|*oneplus*|*realme*) family=1 ;; *) family=0 ;; esac; enabled=$(cat /data/adb/ReSuSFS/lkm_enabled 2>/dev/null); loaded=$([ -d /sys/module/susfs_guard_lkm ] && echo 1 || echo 0); installed=$([ -s /data/adb/loader/susfs_guard_lkm.ko ] && echo 1 || echo 0); printf '%s %s %s %s' "\$family" "\${enabled:-0}" "\$loaded" "\$installed"`);
+    const [family = '0', enabled = '0', loaded = '0', installed = '0'] = result.stdout.trim().split(/\s+/);
+    const nodes = loaded === '1' ? await getLkmInterfaces() : [];
+    const cli = await exec('[ -x /data/adb/ksu/bin/ksu_susfs ]');
+    const card = document.getElementById('lkm-control-card');
+    if (!card) return;
+    card.style.display = family === '1' ? '' : 'none';
+    const status = document.getElementById('lkm-status-text');
+    const toggle = document.getElementById('lkm-toggle-btn');
+    if (!status || !toggle) return;
+    const loadState = loaded === '1' ? getString('lkm_loaded') : installed === '1' ? getString('lkm_installed') : getString('lkm_missing');
+    const startupState = enabled === '1' ? getString('lkm_enabled') : getString('lkm_disabled');
+    status.textContent = getString('lkm_state', loadState, startupState);
+    const capabilities = document.getElementById('lkm-capabilities');
+    if (capabilities) {
+        const detected = nodes.length ? nodes.join(', ') : getString('lkm_no_interfaces');
+        const cliState = cli.errno === 0 ? getString('lkm_cli_available') : getString('lkm_cli_missing');
+        capabilities.textContent = `${getString('lkm_interfaces', detected)}; ${cliState}`;
+    }
+    toggle.disabled = installed !== '1' && enabled !== '1';
+    toggle.textContent = getString(enabled === '1' ? 'lkm_disable' : 'lkm_enable');
+}
+
+async function runLkmCommand(command) {
+    const succeeded = await runReSuSFS(command);
+    showPrompt(succeeded ? getString('lkm_command_success') : getString('lkm_command_failed'), succeeded);
+    await updateLkmStatus();
 }
 
 async function updateStatus() {
@@ -75,8 +115,9 @@ async function updateStatus() {
     const featureCountEl = document.getElementById('status-feature-count');
 
     const susfsBin = await getSusfsBin();
-    const [binCheck, versionResult, variantResult, featuresResult] = await Promise.all([
+    const [binCheck, lkmCheck, versionResult, variantResult, featuresResult] = await Promise.all([
         exec(`[ -x "${susfsBin}" ]`),
+        exec(`[ -d /sys/module/susfs_guard_lkm ]`),
         exec(`"${susfsBin}" show version 2>/dev/null`),
         exec(`"${susfsBin}" show variant 2>/dev/null`),
         exec(`"${susfsBin}" show enabled_features 2>/dev/null`),
@@ -84,6 +125,7 @@ async function updateStatus() {
 
     const version = versionResult.errno === 0 ? versionResult.stdout.trim() : '';
     const variant = variantResult.errno === 0 ? variantResult.stdout.trim() : '';
+    const lkmInterfaces = lkmCheck.errno === 0 ? await getLkmInterfaces() : [];
     const features = featuresResult.errno === 0
         ? featuresResult.stdout.split('\n').map(l => l.trim()).filter(Boolean)
         : [];
@@ -114,6 +156,11 @@ async function updateStatus() {
         kernelVersionEl.textContent = getString('status_kernel_version', version);
         featureCountEl.textContent = getString('status_feature_count', features.length);
         featureCountEl.style.display = 'inline';
+    } else if (lkmCheck.errno === 0) {
+        statusDot.className = 'status-dot active';
+        statusText.textContent = getString('lkm_active_partial');
+        kernelVersionEl.textContent = getString('lkm_interfaces', lkmInterfaces.join(', ') || getString('lkm_no_interfaces'));
+        featureCountEl.style.display = 'none';
     } else {
         statusDot.className = 'status-dot inactive';
         kernelVersionEl.textContent = '';
@@ -180,6 +227,11 @@ function setupTelegramHint() {
 export function mount() {
     setupStatusBox();
     setupSupportCard();
+    document.getElementById('lkm-install-btn').onclick = () => runLkmCommand('--lkm-install');
+    document.getElementById('lkm-toggle-btn').onclick = async () => {
+        const result = await exec(`cat /data/adb/ReSuSFS/lkm_enabled 2>/dev/null`);
+        await runLkmCommand(result.stdout.trim() === '1' ? '--lkm-disable' : '--lkm-enable');
+    };
     setupBackupCard();
     setupTelegramHint();
 
@@ -192,6 +244,7 @@ export function mount() {
 export function onShow() {
     updateUIVisibility();
     updateStatus();
+    updateLkmStatus();
     updateSummary();
 }
 

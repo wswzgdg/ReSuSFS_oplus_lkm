@@ -11,6 +11,25 @@
     <string name="status_unknown">Unknown</string>
     <string name="status_kernel_version">SuSFS %s</string>
     <string name="status_feature_count">%s features enabled</string>
+    <string name="lkm_command_success">LKM command completed successfully</string>
+    <string name="lkm_command_failed">LKM command failed</string>
+    <string name="lkm_title">SUSFS LKM</string>
+    <string name="lkm_checking">Checking optional kernel module…</string>
+    <string name="lkm_state">LKM: %s; startup: %s</string>
+    <string name="lkm_loaded">loaded</string>
+    <string name="lkm_installed">installed, reboot to load</string>
+    <string name="lkm_missing">not installed</string>
+    <string name="lkm_enabled">enabled</string>
+    <string name="lkm_disabled">disabled</string>
+    <string name="lkm_enable">Enable for next boot</string>
+    <string name="lkm_disable">Disable for next boot</string>
+    <string name="lkm_install">Download / update</string>
+    <string name="lkm_interfaces">Detected runtime interfaces: %s</string>
+    <string name="lkm_no_interfaces">none detected</string>
+    <string name="lkm_cli_available">supercall CLI available</string>
+    <string name="lkm_cli_missing">supercall CLI missing; some configuration actions are unavailable</string>
+    <string name="lkm_active_partial">SUSFS LKM active</string>
+    <string name="lkm_no_metadata">Version/variant metadata unavailable</string>
     <!-- Summary -->
     <string name="summary_title">Configuration Summary</string>
     <string name="summary_hint">Tap a tile to jump to the SuSFS page and edit it.</string>
@@ -72,6 +91,15 @@
     <string name="toggle_avc_spoof">Spoof AVC 'su' Context</string>
     <string name="toggle_avc_spoof_desc">Hides the su domain from AVC log enumeration.</string>
     <string name="toggles_apply">Apply</string>
+    <!-- Hidden Modules -->
+    <string name="hide_modules_title">Hidden Modules</string>
+    <string name="hide_modules_desc">Kernel modules hidden from /proc/modules. The LKM itself is always hidden.</string>
+    <string name="hide_modules_add">Add</string>
+    <string name="hide_modules_add_placeholder">Module name</string>
+    <string name="hide_modules_remove">Remove</string>
+    <string name="hide_modules_clear">Clear All</string>
+    <string name="hide_modules_refresh">Refresh</string>
+    <string name="hide_modules_empty">No modules hidden</string>
     <!-- UserHub -->
     <string name="userhub_empty">No scripts yet. Tap + to create one, or import a .sh file.</string>
     <string name="userhub_stage_postfs">post-fs-data</string>

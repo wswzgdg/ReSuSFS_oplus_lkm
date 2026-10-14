@@ -8,8 +8,13 @@ while [ "$(getprop sys.boot_completed)" != "1" ]; do
 done
 
 (
-	while true; do
-		sh $MODDIR/ReSuSFS.sh --status-report > /dev/null 2>&1
-		sleep 5
+	last_status=
+	while [ "$(getprop sys.boot_completed)" = "1" ]; do
+		current_status=$(sh "$MODDIR/ReSuSFS.sh" --status-report 2>&1)
+		if [ "$current_status" != "$last_status" ]; then
+			printf '%s\n' "$current_status"
+			last_status=$current_status
+		fi
+		sleep 30
 	done
 ) &
