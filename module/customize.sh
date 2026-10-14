@@ -65,7 +65,8 @@ collect_changed() {
 			cp "$src" "$dst"
 			ui_print "[+] $file copied"
 		elif ! cmp -s "$src" "$dst"; then
-			printf '%s\n' "$file"
+			ui_print "[+] $file changed"
+			printf '%s\n' "$file" >> "$CHANGED_FILES"
 		fi
 	done
 }
@@ -86,32 +87,31 @@ apply_changed() {
 	done
 }
 
-CHANGED_FILES=$(collect_changed "$CONFIG_DIR" "$PERSISTENT_DIR" "scripts_bootcompleted.txt scripts_postfs.txt")
+CHANGED_FILES=$(mktemp -p "$PERSISTENT_DIR" '.changed.XXXXXX' 2>/dev/null || printf '%s' "$PERSISTENT_DIR/.changed.$$")
+: > "$CHANGED_FILES"
+collect_changed "$CONFIG_DIR" "$PERSISTENT_DIR" "scripts_bootcompleted.txt scripts_postfs.txt"
 if [ -d "$CONFIG_DIR/scripts" ]; then
-	CHANGED_FILES="$CHANGED_FILES
-$(collect_changed "$CONFIG_DIR/scripts" "$PERSISTENT_DIR/scripts" "$(get_all_files "$CONFIG_DIR/scripts")")"
+	collect_changed "$CONFIG_DIR/scripts" "$PERSISTENT_DIR/scripts" "$(get_all_files "$CONFIG_DIR/scripts")"
 fi
 
 CONFIG_FILES=$(get_all_files "$CONFIG_DIR" | grep -v '^scripts/')
 if [ -n "$CONFIG_FILES" ]; then
-	CHANGED_FILES="$CHANGED_FILES
-$(collect_changed "$CONFIG_DIR" "$PERSISTENT_DIR" "$CONFIG_FILES")"
+	collect_changed "$CONFIG_DIR" "$PERSISTENT_DIR" "$CONFIG_FILES"
 fi
 
-if [ -n "$(printf '%s\n' "$CHANGED_FILES" | sed '/^[[:space:]]*$/d')" ]; then
+if [ -s "$CHANGED_FILES" ]; then
 	ui_print "[*] Changed files:"
-	printf '%s\n' "$CHANGED_FILES" | sed '/^[[:space:]]*$/d' | while IFS= read -r file; do
+	while IFS= read -r file; do
 		ui_print "    - $file"
-	done
+	done < "$CHANGED_FILES"
 	ui_print "[*] VOLUME UP to apply all updates, DOWN to keep current files"
 	if detect_key_press; then
-		apply_changed "$CONFIG_DIR" "$PERSISTENT_DIR" <<EOF
-$CHANGED_FILES
-EOF
+		apply_changed "$CONFIG_DIR" "$PERSISTENT_DIR" < "$CHANGED_FILES"
 	else
 		ui_print "[+] Kept existing files"
 	fi
 fi
+rm -f "$CHANGED_FILES"
 
 rm -rf "$CONFIG_DIR"
 
