@@ -87,3 +87,67 @@
 #apply-toggles {
     flex: 1;
 }
+
+/* Hidden Modules box */
+#hide-modules-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hide-modules-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.hide-modules-input-row md-outlined-text-field {
+    flex: 1;
+}
+
+.hide-modules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.hide-modules-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: var(--md-sys-color-surface-container);
+}
+
+.hide-modules-item-name {
+    font-size: 0.9em;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hide-modules-item-remove {
+    flex-shrink: 0;
+}
+
+.hide-modules-empty {
+    text-align: center;
+    padding: 20px;
+    color: var(--md-sys-color-outline);
+    font-size: 0.85em;
+}
+
+.hide-modules-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.hide-modules-actions md-outlined-button {
+    flex: 1;
+}

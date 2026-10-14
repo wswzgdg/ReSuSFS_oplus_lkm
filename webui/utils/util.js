@@ -121,6 +121,7 @@ let actionRunning = false, isTerminalOpen = false;
  * @returns {void}
  */
 export function runReSuSFS(...args) {
+    if (actionRunning) return Promise.resolve(false);
     const terminal = document.getElementById('action-terminal');
     const terminalContent = document.getElementById('action-terminal-content');
     const backButton = document.querySelector('.back-button');
@@ -129,28 +130,6 @@ export function runReSuSFS(...args) {
     const FabContainer = document.querySelector(config.container);
     const closeBtn = document.getElementById('close-terminal');
     const rebootTerminalBtn = document.getElementById('reboot-terminal-btn');
-
-    closeBtn.onclick = () => closeTerminal();
-    rebootTerminalBtn.onclick = () => document.getElementById('reboot-dialog')?.show();
-    backButton.onclick = () => closeTerminal();
-
-    if (!actionRunning) {
-        actionRunning = true;
-        terminalContent.innerHTML = '';
-        rebootTerminalBtn.classList.remove('show');
-        const output = spawn("sh", [`${moduleDirectory}/ReSuSFS.sh`, ...args]);
-        output.stdout.on('data', (data) => appendOutput(data));
-        output.stderr.on('data', (data) => appendOutput(data));
-        output.on('exit', () => {
-            if (isTerminalOpen) {
-                closeBtn.classList.add('show');
-                rebootTerminalBtn.classList.add('show');
-                FabContainer?.classList.add('show');
-            }
-            actionRunning = false;
-        });
-    }
-
     const appendOutput = (output) => {
         const p = document.createElement('p');
         p.className = 'action-terminal-output';
@@ -158,22 +137,38 @@ export function runReSuSFS(...args) {
         terminalContent.appendChild(p);
         terminal.scrollTo({ top: terminal.scrollHeight, behavior: 'smooth' });
     };
-
     const closeTerminal = () => {
         if (!isTerminalOpen) return;
         terminal.close();
         rebootTerminalBtn.classList.remove('show');
-        setTimeout(() => {
-            isTerminalOpen = false;
-        }, 100);
+        setTimeout(() => { isTerminalOpen = false; }, 100);
     };
-
-    setTimeout(() => {
-        isTerminalOpen = true;
-        terminal.open();
-        closeBtn.classList.remove('show');
-        backButton.onclick = () => closeTerminal();
-    }, 50);
+    closeBtn.onclick = () => closeTerminal();
+    rebootTerminalBtn.onclick = () => document.getElementById('reboot-dialog')?.show();
+    backButton.onclick = () => closeTerminal();
+    actionRunning = true;
+    terminalContent.innerHTML = '';
+    rebootTerminalBtn.classList.remove('show');
+    return new Promise((resolve) => {
+        const output = spawn('sh', [`${moduleDirectory}/ReSuSFS.sh`, ...args]);
+        output.stdout.on('data', (data) => appendOutput(data));
+        output.stderr.on('data', (data) => appendOutput(data));
+        output.on('exit', (code) => {
+            if (isTerminalOpen) {
+                closeBtn.classList.add('show');
+                rebootTerminalBtn.classList.add('show');
+                FabContainer?.classList.add('show');
+            }
+            actionRunning = false;
+            resolve(code === 0);
+        });
+        setTimeout(() => {
+            isTerminalOpen = true;
+            terminal.open();
+            closeBtn.classList.remove('show');
+            backButton.onclick = () => closeTerminal();
+        }, 50);
+    });
 }
 
 /**

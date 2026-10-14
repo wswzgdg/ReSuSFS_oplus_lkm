@@ -213,6 +213,84 @@ ReSuSFSEditorEOF
     });
 }
 
+// Hidden Modules box
+
+const trashIcon = `<svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-200h80v-440h-80v440Zm160 0h80v-440h-80v440Z"/></svg>`;
+
+async function fetchHideModules() {
+    const result = await exec('cat /proc/susfs_hide_modules 2>/dev/null');
+    if (result.errno !== 0) return [];
+    return result.stdout.split('\n').map(l => l.trim()).filter(Boolean);
+}
+
+async function refreshHideModules() {
+    const listEl = document.getElementById('hide-modules-list');
+    const badgeEl = document.getElementById('hide-modules-count');
+    if (!listEl) return;
+
+    const modules = await fetchHideModules();
+    listEl.innerHTML = '';
+    badgeEl.textContent = modules.length;
+
+    if (modules.length === 0) {
+        listEl.innerHTML = `<p class="hide-modules-empty">${getString('hide_modules_empty')}</p>`;
+        return;
+    }
+
+    modules.forEach(mod => {
+        const item = document.createElement('div');
+        item.className = 'hide-modules-item';
+        item.innerHTML = `
+            <span class="hide-modules-item-name">${mod}</span>
+            <md-outlined-icon-button class="hide-modules-item-remove" data-module="${mod}" title="${getString('hide_modules_remove')}">
+                <md-icon>${trashIcon}</md-icon>
+            </md-outlined-icon-button>
+        `;
+        listEl.appendChild(item);
+    });
+
+    listEl.querySelectorAll('.hide-modules-item-remove').forEach(btn => {
+        btn.onclick = async () => {
+            const mod = btn.dataset.module;
+            await runReSuSFS('--hide-modules-del', mod);
+            await refreshHideModules();
+        };
+    });
+}
+
+async function addHideModule() {
+    const input = document.getElementById('hide-modules-input');
+    const mod = input.value.trim();
+    if (!mod) return;
+    await runReSuSFS('--hide-modules-add', mod);
+    input.value = '';
+    await refreshHideModules();
+}
+
+async function clearHideModules() {
+    await runReSuSFS('--hide-modules-clear');
+    await refreshHideModules();
+}
+
+function setupHideModules() {
+    const addBtn = document.getElementById('hide-modules-add-btn');
+    const clearBtn = document.getElementById('hide-modules-clear-btn');
+    const refreshBtn = document.getElementById('hide-modules-refresh-btn');
+    const input = document.getElementById('hide-modules-input');
+
+    if (addBtn) addBtn.onclick = addHideModule;
+    if (clearBtn) clearBtn.onclick = clearHideModules;
+    if (refreshBtn) refreshBtn.onclick = refreshHideModules;
+    if (input) {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addHideModule();
+            }
+        });
+    }
+}
+
 export function mount() {
     const container = document.getElementById('susfs-boxes');
     const togglesBox = document.getElementById('toggles-box');
@@ -220,6 +298,7 @@ export function mount() {
 
     setupBoxActions();
     setupToggles();
+    setupHideModules();
 }
 
 const playIcon2 = `<svg xmlns="http://www.w3.org/2000/svg" height="34px" viewBox="0 -960 960 960" width="34px"><path d="M320-200v-560l440 280-440 280Z"/></svg>`;
@@ -243,6 +322,7 @@ export function onShow() {
     forceUpdateButton.onclick = () => runReSuSFS('--force-update');
     refreshBadges();
     loadToggles();
+    refreshHideModules();
 }
 
 export function onHide() {

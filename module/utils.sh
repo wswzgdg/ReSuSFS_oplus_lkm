@@ -22,15 +22,20 @@ get_all_files() {
 }
 
 download_file() {
-	local BB url="$1" out="$2" attempt=1
-	BB=$(command -v busybox) || { echo "[!] No BusyBox found!"; return 1; }
-	while [ $attempt -le 3 ]; do
-		echo "[*] Download attempt $attempt/3..."
+	local url="$1" out="$2" attempt=1 curl=/system/bin/curl
+	[ -x "$curl" ] || { echo "[!] Android curl not found at $curl"; return 1; }
+	while [ "$attempt" -le 3 ]; do
+		echo "[*] Download attempt $attempt/3: $url"
 		rm -f "$out"
-		$BB wget -q --no-check-certificate "$url" -O "$out" && [ -s "$out" ] && { echo "[+] Download successful"; return 0; }
+		code=$("$curl" --silent --show-error --location --fail --connect-timeout 15 --max-time 120 --output "$out" --write-out '%{http_code}' "$url") || code=000
+		case "$code" in
+			2*)
+				if [ -s "$out" ]; then echo "[+] Download successful"; return 0; fi
+				echo "[-] Download returned an empty file (HTTP $code)" ;;
+			*) echo "[-] Download failed (HTTP $code)" ;;
+		esac
 		rm -f "$out"
-		echo "[-] Download failed"
-		[ $attempt -lt 3 ] && $BB sleep 3
+		if [ "$attempt" -lt 3 ]; then echo "[*] Retrying in 3 seconds..."; busybox sleep 3; fi
 		attempt=$((attempt + 1))
 	done
 	echo "[!] All download attempts failed"
@@ -42,6 +47,11 @@ update_susfs() {
 	local tmp="/data/local/tmp/ksu_susfs_arm64"
 	local DEST_BIN_DIR="/data/adb/ksu/bin"
 	local ARCH="$(getprop ro.product.cpu.abi)"
+
+	if [ -x "$DEST_BIN_DIR/ksu_susfs" ]; then
+		echo "[+] Existing ksu_susfs CLI found; keeping it for LKM supercalls"
+		return 0
+	fi
 
 	if [ ! -d "$DEST_BIN_DIR" ]; then
 		echo "[!] '$DEST_BIN_DIR' not existed, installation aborted."
