@@ -104,7 +104,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
-        python .github/scripts/generate_changelog.py \
+        python3 .github/scripts/generate_changelog.py \
           --from "${{ env.PREVIOUS_VERSION }}" \
           --to HEAD \
           --version "${{ env.VERSION }}" \
@@ -121,7 +121,7 @@ jobs:
 
         git add CHANGELOG.md
         git commit -m "docs: update CHANGELOG.md for ${VERSION}"
-        git push
+        git push origin HEAD:${GITHUB_REF}
 
     - name: Create new release
       if: env.version_changed == 'true'
