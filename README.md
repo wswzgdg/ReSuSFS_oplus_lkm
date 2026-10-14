@@ -50,6 +50,10 @@ Root hiding made simple, powerful when you need it. A [KernelSU](https://kernels
 - [KernelSU](https://kernelsu.org)
 - [GKID Kernel](https://github.com/ahmed-alnassif/GKID-Kernels) for SuSFS support (optional)
 
+## LKM Support
+
+For OnePlus / OPPO / Realme devices without native SUSFS, this module supports [oneplus-susfs4ksu-lkm](https://github.com/wswzgdg/ReSuSFS_oplus_lkm) as an alternative backend. It routes commands to `/proc/susfs_*` interfaces automatically and includes a Hidden Modules management section in the WebUI.
+
 ## Install
 
 1. Download the [latest release](https://github.com/ahmed-alnassif/ReSuSFS/releases/latest)
