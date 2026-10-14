@@ -32,17 +32,17 @@ jobs:
       VERSION: ${{ env.VERSION }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v7
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
     - name: Setup pnpm
-      uses: pnpm/action-setup@v6
+      uses: pnpm/action-setup@v4
       with:
         version: 'latest'
 
     - name: Setup Node
-      uses: actions/setup-node@v7
+      uses: actions/setup-node@v4
       with:
         node-version: 'lts/*'
         cache: 'pnpm'
@@ -59,13 +59,19 @@ jobs:
       run: |
         MODULE_DESC="SuSFS for KernelSU"
         CURRENT_VERSION_CODE=$(jq -r .versionCode update.json)
-        PREVIOUS_VERSION_CODE=$(jq -r .versionCode <(git show HEAD~1:update.json))
         VERSION=$(jq -r .version update.json)
-        PREVIOUS_VERSION=$(jq -r .version <(git show HEAD~1:update.json))
+        ZIP_NAME=${{ env.MODULE_NAME }}
+
+        if git rev-parse HEAD~1 --quiet 2>/dev/null; then
+          PREVIOUS_VERSION_CODE=$(jq -r .versionCode <(git show HEAD~1:update.json))
+          PREVIOUS_VERSION=$(jq -r .version <(git show HEAD~1:update.json))
+        else
+          PREVIOUS_VERSION_CODE=0
+          PREVIOUS_VERSION="v0.0.0"
+        fi
+
         echo "VERSION=${VERSION}" >> $GITHUB_ENV
         echo "PREVIOUS_VERSION=${PREVIOUS_VERSION}" >> $GITHUB_ENV
-        COMMIT_ID=$(git rev-parse --short HEAD)
-        ZIP_NAME=${{ env.MODULE_NAME }}
         echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
 
         if [ "$CURRENT_VERSION_CODE" -gt "$PREVIOUS_VERSION_CODE" ]; then
@@ -75,13 +81,13 @@ jobs:
         fi
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.ZIP_NAME }}
         path: 'module'
 
     - name: Download artifact
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@v4
       with:
         name: ${{ env.ZIP_NAME }}
         path: ${{ env.MODULE_NAME }}
@@ -92,45 +98,9 @@ jobs:
         zip -r ../${{ env.ZIP_NAME }}.zip .
         cd ..
 
-    - name: Upload to Telegram
-      env:
-        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        CHAT_ID: ${{ secrets.CHAT_ID }}
-        TOPIC_ID: ${{ secrets.TOPIC_ID }}
-        COMMIT_MSG: ${{ github.event.head_commit.message }}
-        COMMIT_URL: ${{ github.event.head_commit.url }}
-        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        REPOSITORY: ${{ github.repository }}
-        REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-        RUN_NUMBER: ${{ github.run_number }}
-        ZIP_NAME: ${{ env.ZIP_NAME }}
-      run: |
-        set -euo pipefail
-
-        [[ -n "$BOT_TOKEN" ]] || { echo "::error::TELEGRAM_BOT_TOKEN is not set"; exit 1; }
-        [[ -n "$CHAT_ID" ]] || { echo "::error::TELEGRAM_CHAT_ID is not set"; exit 1; }
-        [[ -n "$TOPIC_ID" ]] || { echo "::error::TELEGRAM_TOPIC_ID is not set"; exit 1; }
-        [[ -f "$ZIP_NAME.zip" ]] || { echo "::error::$ZIP_NAME.zip not found"; exit 1; }
-
-        MSG=$(printf '%s\n' "$COMMIT_MSG" | head -1)
-
-        curl --fail-with-body -sS \
-          -F "chat_id=$CHAT_ID" \
-          -F "message_thread_id=$TOPIC_ID" \
-          -F "document=@$ZIP_NAME.zip" \
-          -F "caption=[*${REPOSITORY//-/\\-}*](${REPO_URL//-/\\-})
-
-        \`\`\`
-        $MSG
-        \`\`\`
-
-          [Commit]($COMMIT_URL) • [CI \#$RUN_NUMBER]($RUN_URL)  " \
-          -F "parse_mode=MarkdownV2" \
-          "https://api.telegram.org/bot$BOT_TOKEN/sendDocument"
-
     - name: Generate changelog
       id: changelog
-      if: env.version_changed == 'true' || inputs.force_release
+      if: env.version_changed == 'true' || ${{ inputs.force_release }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
@@ -138,6 +108,7 @@ jobs:
           --from "${{ env.PREVIOUS_VERSION }}" \
           --to HEAD \
           --version "${{ env.VERSION }}" \
+          --repo-slug "${{ github.repository }}" \
           --output changelog_body.md
 
     - name: Update CHANGELOG.md
