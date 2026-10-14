@@ -26,24 +26,37 @@ MERGE_RE = re.compile(r"^merge pull request #\d+", re.IGNORECASE)
 
 
 def get_commits(repo_slug, from_ref, to_ref):
-	result = subprocess.run(
-		["gh", "api", f"repos/{repo_slug}/compare/{from_ref}...{to_ref}"],
-		capture_output=True,
-		text=True,
-		check=True,
-	)
-	data = json.loads(result.stdout)
+    try:
+        result = subprocess.run(
+            ["gh", "api", f"repos/{repo_slug}/compare/{from_ref}...{to_ref}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError:
+        result = subprocess.run(
+            ["gh", "api", f"repos/{repo_slug}/commits?per_page=100"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    data = json.loads(result.stdout)
 
-	commits = []
-	for item in data.get("commits", []):
+    commits = []
+    if isinstance(data, list):
+        items = data
+    else:
+        items = data.get("commits", [])
 
-		subject = item["commit"]["message"].split("\n")[0].strip()
-		commit_name = (item["commit"]["author"] or {}).get("name", "unknown").strip()
-		author = (item.get("author") or {}).get("login")
+    for item in items:
+        subject = item["commit"]["message"].split("\n")[0].strip()
+        commit_name = (item["commit"]["author"] or {}).get("name", "unknown").strip()
+        author_obj = item.get("author") or {}
+        author_login = author_obj.get("login") if isinstance(author_obj, dict) else None
 
-		commits.append((subject, commit_name, author))
+        commits.append((subject, commit_name, author_login))
 
-	return commits
+    return commits
 
 
 def is_bot(commit_name, author):
