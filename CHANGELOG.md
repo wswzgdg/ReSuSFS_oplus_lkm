@@ -1,4 +1,19 @@
 
+## [v26.10.18-lkm] - 2026-10-14
+
+
+### 📦 Other
+
+- simplify config sync, share one download helper (@wswzgdg)
+- Merge remote-tracking branch 'origin/dev' into dev (@wswzgdg)
+- fix exit codes and config bugs, factor out repeated shell helpers (@wswzgdg)
+- drop dead versionCode, report cron install failure, mark intentional word splits (@wswzgdg)
+- load the SUSFS LKM at install and enable, restore hotinstall.sh, bump to v26.10.18-lkm (@wswzgdg)
+
+### 🤖 Automated
+
+- docs: update CHANGELOG.md for v26.10.16-lkm
+
 ## [v26.10.16-lkm] - 2026-10-14
 
 
