@@ -108,6 +108,7 @@ jobs:
           --from "${{ env.PREVIOUS_VERSION }}" \
           --to HEAD \
           --version "${{ env.VERSION }}" \
+          --repo-slug "${{ github.repository }}" \
           --output changelog_body.md
 
     - name: Update CHANGELOG.md
