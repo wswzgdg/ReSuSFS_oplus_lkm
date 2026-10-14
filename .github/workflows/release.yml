@@ -32,7 +32,7 @@ jobs:
       VERSION: ${{ env.VERSION }}
     steps:
     - name: Checkout
-      uses: actions/checkout@v7
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -59,13 +59,19 @@ jobs:
       run: |
         MODULE_DESC="SuSFS for KernelSU"
         CURRENT_VERSION_CODE=$(jq -r .versionCode update.json)
-        PREVIOUS_VERSION_CODE=$(jq -r .versionCode <(git show HEAD~1:update.json))
         VERSION=$(jq -r .version update.json)
-        PREVIOUS_VERSION=$(jq -r .version <(git show HEAD~1:update.json))
+        ZIP_NAME=${{ env.MODULE_NAME }}
+
+        if git rev-parse HEAD~1 --quiet 2>/dev/null; then
+          PREVIOUS_VERSION_CODE=$(jq -r .versionCode <(git show HEAD~1:update.json))
+          PREVIOUS_VERSION=$(jq -r .version <(git show HEAD~1:update.json))
+        else
+          PREVIOUS_VERSION_CODE=0
+          PREVIOUS_VERSION="v0.0.0"
+        fi
+
         echo "VERSION=${VERSION}" >> $GITHUB_ENV
         echo "PREVIOUS_VERSION=${PREVIOUS_VERSION}" >> $GITHUB_ENV
-        COMMIT_ID=$(git rev-parse --short HEAD)
-        ZIP_NAME=${{ env.MODULE_NAME }}
         echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
 
         if [ "$CURRENT_VERSION_CODE" -gt "$PREVIOUS_VERSION_CODE" ]; then
@@ -75,13 +81,13 @@ jobs:
         fi
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.ZIP_NAME }}
         path: 'module'
 
     - name: Download artifact
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@v4
       with:
         name: ${{ env.ZIP_NAME }}
         path: ${{ env.MODULE_NAME }}
@@ -94,7 +100,7 @@ jobs:
 
     - name: Generate changelog
       id: changelog
-      if: env.version_changed == 'true' || inputs.force_release
+      if: env.version_changed == 'true' || ${{ inputs.force_release }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
