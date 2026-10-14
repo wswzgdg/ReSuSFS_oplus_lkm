@@ -13,6 +13,12 @@ trap 'rm -rf "$WORK"' EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
+retryable_code() {
+    case "$1" in
+        000|408|429|5[0-9][0-9]) return 0 ;;
+        *) return 1 ;;
+    esac
+}
 fetch() {
     attempt=1
     while [ "$attempt" -le 3 ]; do
@@ -20,8 +26,10 @@ fetch() {
         code=$("$CURL" --silent --show-error --location --connect-timeout 15 --max-time 120 --output "$2" --write-out '%{http_code}' "$1") || code=000
         case "$code" in
             2*) echo "[+] Download successful" >&2; return 0 ;;
-            *) echo "[-] Download failed (HTTP $code)" >&2; rm -f "$2" ;;
         esac
+        echo "[-] Download failed (HTTP $code)" >&2
+        rm -f "$2"
+        if ! retryable_code "$code"; then echo "[!] HTTP $code is not retryable" >&2; return 1; fi
         if [ "$attempt" -lt 3 ]; then /data/adb/ksu/bin/busybox sleep 3; fi
         attempt=$((attempt + 1))
     done

@@ -21,13 +21,20 @@ get_all_files() {
     find "$dir" -type f 2>/dev/null | sed "s|^$dir/||"
 }
 
+retryable_code() {
+	case "$1" in
+		000|408|429|5[0-9][0-9]) return 0 ;;
+		*) return 1 ;;
+	esac
+}
+
 download_file() {
 	local url="$1" out="$2" attempt=1 curl=/system/bin/curl
 	[ -x "$curl" ] || { echo "[!] Android curl not found at $curl"; return 1; }
 	while [ "$attempt" -le 3 ]; do
 		echo "[*] Download attempt $attempt/3: $url"
 		rm -f "$out"
-		code=$("$curl" --silent --show-error --location --fail --connect-timeout 15 --max-time 120 --output "$out" --write-out '%{http_code}' "$url") || code=000
+		code=$("$curl" --silent --show-error --location --connect-timeout 15 --max-time 120 --output "$out" --write-out '%{http_code}' "$url") || code=000
 		case "$code" in
 			2*)
 				if [ -s "$out" ]; then echo "[+] Download successful"; return 0; fi
@@ -35,6 +42,7 @@ download_file() {
 			*) echo "[-] Download failed (HTTP $code)" ;;
 		esac
 		rm -f "$out"
+		if ! retryable_code "$code"; then echo "[!] HTTP $code is not retryable"; return 1; fi
 		if [ "$attempt" -lt 3 ]; then echo "[*] Retrying in 3 seconds..."; busybox sleep 3; fi
 		attempt=$((attempt + 1))
 	done

@@ -40,15 +40,8 @@ if echo "$brand $manufacturer" | grep -Eq 'oppo|oneplus|realme' && ! "$DEST_BIN_
 	fi
 fi
 
-if [ -d "$PERSISTENT_DIR" ]; then
-	ui_print "[*] Have you backed up your configuration?"
-	ui_print "[*] VOLUME UP for YES, DOWN for NO"
-	if ! detect_key_press; then
-		ui_print "[!] Please back up your configuration first"
-		exit 1
-	fi
-fi
-
+# $PERSISTENT_DIR is never deleted by install or uninstall, so the user's config is
+# kept automatically: no prompt, and nothing to ask when the dir does not exist.
 CONFIG_DIR="$MODPATH/configs"
 
 [ ! -d "$CONFIG_DIR" ] || [ -z "$(ls -A "$CONFIG_DIR" 2>/dev/null)" ] && ui_print "[!] No config files found" && exit 0
@@ -62,7 +55,7 @@ collect_changed() {
 		dst="$dst_dir/$file"
 		if [ ! -f "$dst" ]; then
 			mkdir -p "$dst_dir/$(dirname "$file")"
-			cp "$src" "$dst"
+			cp "$src" "$dst" || { ui_print "[-] $file copy failed"; continue; }
 			ui_print "[+] $file copied"
 		elif ! cmp -s "$src" "$dst"; then
 			ui_print "[+] $file changed"
@@ -75,6 +68,9 @@ apply_changed() {
 	while IFS= read -r file; do
 		[ -n "$file" ] || continue
 		if [ "${file#scripts/}" != "$file" ]; then
+			src="$CONFIG_DIR/scripts/${file#scripts/}"
+			dst="$PERSISTENT_DIR/scripts/${file#scripts/}"
+		elif [ -f "$CONFIG_DIR/scripts/$file" ]; then
 			src="$CONFIG_DIR/scripts/$file"
 			dst="$PERSISTENT_DIR/scripts/$file"
 		else
@@ -82,16 +78,16 @@ apply_changed() {
 			dst="$PERSISTENT_DIR/$file"
 		fi
 		mkdir -p "$(dirname "$dst")"
-		cp "$src" "$dst"
+		cp "$src" "$dst" || { ui_print "[-] $file update failed"; continue; }
 		ui_print "[+] $file updated"
 	done
 }
 
+mkdir -p "$PERSISTENT_DIR"
 CHANGED_FILES=$(mktemp -p "$PERSISTENT_DIR" '.changed.XXXXXX' 2>/dev/null || printf '%s' "$PERSISTENT_DIR/.changed.$$")
 : > "$CHANGED_FILES"
-collect_changed "$CONFIG_DIR" "$PERSISTENT_DIR" "scripts_bootcompleted.txt scripts_postfs.txt"
 if [ -d "$CONFIG_DIR/scripts" ]; then
-	collect_changed "$CONFIG_DIR/scripts" "$PERSISTENT_DIR/scripts" "$(get_all_files "$CONFIG_DIR/scripts")"
+	collect_changed "$CONFIG_DIR" "$PERSISTENT_DIR" "$(get_all_files "$CONFIG_DIR/scripts" | sed 's|^|scripts/|')"
 fi
 
 CONFIG_FILES=$(get_all_files "$CONFIG_DIR" | grep -v '^scripts/')
