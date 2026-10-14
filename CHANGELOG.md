@@ -6,6 +6,19 @@
 
 - ask about the SUSFS LKM only after ksu_susfs is actually in place (@wswzgdg)
 - Merge remote-tracking branch 'origin/dev' into dev (@wswzgdg)
+- simplify config sync, share one download helper (@wswzgdg)
+
+### 🤖 Automated
+
+- docs: update CHANGELOG.md for v26.10.16-lkm
+
+## [v26.10.16-lkm] - 2026-10-14
+
+
+### 📦 Other
+
+- ask about the SUSFS LKM only after ksu_susfs is actually in place (@wswzgdg)
+- Merge remote-tracking branch 'origin/dev' into dev (@wswzgdg)
 
 ## [v26.10.15-lkm] - 2026-10-14
 
