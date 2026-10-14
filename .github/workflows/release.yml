@@ -63,7 +63,7 @@ jobs:
         ZIP_NAME=${{ env.MODULE_NAME }}
 
         # Find the latest tag before HEAD (actual previous release)
-        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 --exclude="$VERSION" HEAD 2>/dev/null || echo "")
         if [ -n "$PREVIOUS_TAG" ]; then
           PREVIOUS_VERSION_CODE=$(jq -r .versionCode <(git show "${PREVIOUS_TAG}:update.json" 2>/dev/null) || echo "0")
           PREVIOUS_VERSION="$PREVIOUS_TAG"
