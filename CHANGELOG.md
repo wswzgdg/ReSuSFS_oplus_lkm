@@ -1,4 +1,35 @@
 
+## [v26.10.13] - 2026-10-13
+
+
+### 🌐 WebUI
+
+- **fix:** route all editor close paths through one dirty-check, fixes back gesture skipping the unsaved-changes prompt and the title staying stuck after closing (fix: #23) (@ahmed-alnassif)
+- **l10n:** update translations (#21) (@weblate)
+- **fix:** stop the unsaved changes prompt from showing twice (@ahmed-alnassif)
+- **fix:** keep the unsaved changes prompt from exiting the module on back (@ahmed-alnassif)
+
+### ✨ Features
+
+- add an icon for KernelSU modules (@ahmed-alnassif)
+
+### 🔧 Fixes
+
+- add icon metadata to module.yaml (@ahmed-alnassif)
+
+### 📚 Documentation
+
+- update banner image (@ahmed-alnassif)
+- add a new logo (@ahmed-alnassif)
+
+### 🧹 Chores
+
+- bump version to v26.10.13 (@ahmed-alnassif)
+
+### 🤖 Automated
+
+- webui(deps): Bump the webui-deps group in /webui with 7 updates (#24)
+
 ## [v26.10.11] - 2026-10-11
 
 

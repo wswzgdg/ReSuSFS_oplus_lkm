@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Overwrite default dialog animation
 document.querySelectorAll('md-dialog').forEach(dialog => {
-    if (dialog.id !== 'unsaved-changes-dialog') registerManagedDialog(dialog);
+    registerManagedDialog(dialog);
 
     const defaultOpenAnim = dialog.getOpenAnimation;
     const defaultCloseAnim = dialog.getCloseAnimation;
