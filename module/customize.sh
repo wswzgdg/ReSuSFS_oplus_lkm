@@ -22,24 +22,6 @@ detect_key_press() {
 	esac
 }
 
-brand=$(getprop ro.product.brand | tr '[:upper:]' '[:lower:]')
-manufacturer=$(getprop ro.product.manufacturer | tr '[:upper:]' '[:lower:]')
-if echo "$brand $manufacturer" | grep -Eq 'oppo|oneplus|realme' && ! "$DEST_BIN_DIR/ksu_susfs" show version >/dev/null 2>&1; then
-	ui_print "[*] No working native ksu_susfs detected. Optional exact-KMI SUSFS LKM download?"
-	ui_print "[*] VOLUME UP to download and enable for next boot, DOWN to skip"
-	if detect_key_press; then
-		if sh "$MODPATH/install_susfs_lkm.sh"; then
-			mkdir -p "$PERSISTENT_DIR"
-			echo 1 > "$PERSISTENT_DIR/lkm_enabled"
-			ui_print "[+] LKM installed and enabled for next boot; reboot required"
-		else
-			ui_print "[!] LKM install failed; continuing without it"
-		fi
-	else
-		ui_print "[*] Skipping optional SUSFS LKM"
-	fi
-fi
-
 # $PERSISTENT_DIR is never deleted by install or uninstall, so the user's config is
 # kept automatically: no prompt, and nothing to ask when the dir does not exist.
 CONFIG_DIR="$MODPATH/configs"
@@ -111,7 +93,29 @@ rm -f "$CHANGED_FILES"
 
 rm -rf "$CONFIG_DIR"
 
+# update_susfs fetches the userland ksu_susfs CLI; only after it is in place is
+# it possible to tell whether the kernel side actually works. Ask about the LKM
+# after that, like the config prompt above: nothing to ask when the native path
+# works.
 update_susfs || exit 1
+
+brand=$(getprop ro.product.brand | tr '[:upper:]' '[:lower:]')
+manufacturer=$(getprop ro.product.manufacturer | tr '[:upper:]' '[:lower:]')
+if echo "$brand $manufacturer" | grep -Eq 'oppo|oneplus|realme' && ! "$DEST_BIN_DIR/ksu_susfs" show version >/dev/null 2>&1; then
+	ui_print "[*] No working native ksu_susfs detected. Optional exact-KMI SUSFS LKM download?"
+	ui_print "[*] VOLUME UP to download and enable for next boot, DOWN to skip"
+	if detect_key_press; then
+		if sh "$MODPATH/install_susfs_lkm.sh"; then
+			mkdir -p "$PERSISTENT_DIR"
+			echo 1 > "$PERSISTENT_DIR/lkm_enabled"
+			ui_print "[+] LKM installed and enabled for next boot; reboot required"
+		else
+			ui_print "[!] LKM install failed; continuing without it"
+		fi
+	else
+		ui_print "[*] Skipping optional SUSFS LKM"
+	fi
+fi
 
 chmod 755 "$MODPATH/ReSuSFS.sh"
 chmod 644 "$MODPATH/post-fs-data.sh" "$MODPATH/service.sh" "$MODPATH/uninstall.sh" 2>/dev/null
