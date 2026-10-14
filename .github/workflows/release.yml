@@ -92,42 +92,6 @@ jobs:
         zip -r ../${{ env.ZIP_NAME }}.zip .
         cd ..
 
-    - name: Upload to Telegram
-      env:
-        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        CHAT_ID: ${{ secrets.CHAT_ID }}
-        TOPIC_ID: ${{ secrets.TOPIC_ID }}
-        COMMIT_MSG: ${{ github.event.head_commit.message }}
-        COMMIT_URL: ${{ github.event.head_commit.url }}
-        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        REPOSITORY: ${{ github.repository }}
-        REPO_URL: ${{ github.server_url }}/${{ github.repository }}
-        RUN_NUMBER: ${{ github.run_number }}
-        ZIP_NAME: ${{ env.ZIP_NAME }}
-      run: |
-        set -euo pipefail
-
-        [[ -n "$BOT_TOKEN" ]] || { echo "::error::TELEGRAM_BOT_TOKEN is not set"; exit 1; }
-        [[ -n "$CHAT_ID" ]] || { echo "::error::TELEGRAM_CHAT_ID is not set"; exit 1; }
-        [[ -n "$TOPIC_ID" ]] || { echo "::error::TELEGRAM_TOPIC_ID is not set"; exit 1; }
-        [[ -f "$ZIP_NAME.zip" ]] || { echo "::error::$ZIP_NAME.zip not found"; exit 1; }
-
-        MSG=$(printf '%s\n' "$COMMIT_MSG" | head -1)
-
-        curl --fail-with-body -sS \
-          -F "chat_id=$CHAT_ID" \
-          -F "message_thread_id=$TOPIC_ID" \
-          -F "document=@$ZIP_NAME.zip" \
-          -F "caption=[*${REPOSITORY//-/\\-}*](${REPO_URL//-/\\-})
-
-        \`\`\`
-        $MSG
-        \`\`\`
-
-          [Commit]($COMMIT_URL) • [CI \#$RUN_NUMBER]($RUN_URL)  " \
-          -F "parse_mode=MarkdownV2" \
-          "https://api.telegram.org/bot$BOT_TOKEN/sendDocument"
-
     - name: Generate changelog
       id: changelog
       if: env.version_changed == 'true' || inputs.force_release
