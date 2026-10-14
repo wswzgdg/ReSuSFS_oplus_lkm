@@ -1,6 +1,31 @@
 
 ## [v26.10.14-lkm] - 2026-10-14
 
+
+### ✨ Features
+
+- **LKM:** adapt for oneplus-susfs4ksu-lkm (@wswzgdg)
+
+### 🔧 Fixes
+
+- fallback to commits list when compare ref not found (@wswzgdg)
+- use python3 and specify git push remote (@wswzgdg)
+- use git describe to find previous tag instead of HEAD~1 update.json (@wswzgdg)
+
+### 📚 Documentation
+
+- update documentation for LKM support (@wswzgdg)
+
+### ⚙️ CI/CD
+
+- fix workflow actions and remove Telegram upload (@wswzgdg)
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/dev' into dev (@wswzgdg)
+
+## [v26.10.14-lkm] - 2026-10-14
+
 ### ✨ Features
 
 - feat(LKM): adapt for oneplus-susfs4ksu-lkm
