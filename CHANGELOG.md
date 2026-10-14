@@ -1,4 +1,11 @@
 
+## [v26.10.15-lkm] - 2026-10-14
+
+
+### 📦 Other
+
+- fix installer config sync, drop config backup prompt, fail fast on 403 (@wswzgdg)
+
 ## [v26.10.14-lkm] - 2026-10-14
 
 
