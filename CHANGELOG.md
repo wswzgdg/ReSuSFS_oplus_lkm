@@ -113,6 +113,121 @@
 - docs: update CHANGELOG.md for v2.3.0-d348051
 - webui: new Crowdin translations by GitHub Action (#14)
 - New Crowdin translations by GitHub Action (#12)
+
+## [v26.10.14-lkm] - 2026-10-14
+
+
+### 🌐 WebUI
+
+- **fix:** keep the unsaved changes prompt from exiting the module on back (@ahmed-alnassif)
+- **fix:** stop the unsaved changes prompt from showing twice (@ahmed-alnassif)
+- **l10n:** update translations (#21) (@weblate)
+- **fix:** route all editor close paths through one dirty-check, fixes back gesture skipping the unsaved-changes prompt and the title staying stuck after closing (fix: #23) (@ahmed-alnassif)
+- **fix:** show a script's full output in its cron log, not just the start/end lines (@ahmed-alnassif)
+- migrate from crowdin to weblate (@ahmed-alnassif)
+- add Arabic translation setting and correct ar-SA (@ahmed-alnassif)
+- **feat:** color a script's own output lines inside the cron log viewer, not just the start/end lines (@ahmed-alnassif)
+- **feat:** add color highlighting to terminal output by [symbol] tags (@ahmed-alnassif)
+- **feat:** add color highlighting to log viewers (@ahmed-alnassif)
+- **feat:** add clear button to log viewers (@ahmed-alnassif)
+- **fix:** don't show schedule log fab in SuSFS tab (@ahmed-alnassif)
+- **fix:** make the rest of the terminal usable after making it visible (@ahmed-alnassif)
+- **feat:** add schedule logs fab button (@ahmed-alnassif)
+- **feat:** add button to view a script's own cron run history (@ahmed-alnassif)
+- **feat:** show each script's last cron run time and result in UserHub (@ahmed-alnassif)
+- **fix:** make @lezer/common fix self-updating instead of a hardcoded version (@ahmed-alnassif)
+- update package.json metadata (version, author, license) (@ahmed-alnassif)
+- **fix:** move @lezer/common override to pnpm-workspace.yaml, fixes syntax highlighting broken by a duplicate package version (@ahmed-alnassif)
+- **feat:** make back button/gesture close dialogs, the editor, and terminals instead of exiting the app immediately (closes #18) (@ahmed-alnassif)
+- add translation link instead of documentation (closes #8) (@ahmed-alnassif)
+- **feat:** add available languages to selector (@ahmed-alnassif)
+
+### 🧩 Module
+
+- **fix:** remove hot install since ReSuSFS requires a full reboot after installing or updating (@ahmed-alnassif)
+- **fix:** use status symbol instead success for script exit (@ahmed-alnassif)
+- **feat:** log start/end time and exit code for every cron-run script (@ahmed-alnassif)
+- ask for configs backup only when they exist (@ahmed-alnassif)
+
+### ✨ Features
+
+- **LKM:** adapt for oneplus-susfs4ksu-lkm (@wswzgdg)
+- add an icon for KernelSU modules (@ahmed-alnassif)
+- add module.yaml to add ReSuSFS to KernelSU manger (@ahmed-alnassif)
+
+### 🔧 Fixes
+
+- use git describe to find previous tag instead of HEAD~1 update.json (@wswzgdg)
+- use python3 and specify git push remote (@wswzgdg)
+- fallback to commits list when compare ref not found (@wswzgdg)
+- use github.repository for changelog repo slug (@wswzgdg)
+- correct pnpm and setup-node action versions (@wswzgdg)
+- workflow action versions and inputs syntax (@wswzgdg)
+- **LKM:** correct printf escaping, add hide_modules WebUI, simplify logic (@wswzgdg)
+- add icon metadata to module.yaml (@ahmed-alnassif)
+- one asset per release (@ahmed-alnassif)
+- back button now works correctly for menus and dialogs (@ahmed-alnassif)
+
+### 📚 Documentation
+
+- update documentation for LKM support (@wswzgdg)
+- add a new logo (@ahmed-alnassif)
+- update banner image (@ahmed-alnassif)
+- migrate ReSukiSU to BakaSU (@ahmed-alnassif)
+- migrate from crowdin to weblate (@ahmed-alnassif)
+- add GKID as the recommended kernel for full SuSFS support (@ahmed-alnassif)
+
+### ⚙️ CI/CD
+
+- fix workflow actions and remove Telegram upload (@wswzgdg)
+- remove Telegram upload step (@wswzgdg)
+- migrate from crowdin to weblate (@ahmed-alnassif)
+- **fix:** don't upload local translations (@ahmed-alnassif)
+- **crowdin:** upload local translations (@ahmed-alnassif)
+- **crowdin:** don't start the workflow in every doc push (@ahmed-alnassif)
+- fix syntax error (@ahmed-alnassif)
+- use the correct secret variable for crowdin (@ahmed-alnassif)
+- improve Crowdin workflow with official action pattern and proper branch handling (@ahmed-alnassif)
+
+### 🧹 Chores
+
+- bump version to v26.10.13 (@ahmed-alnassif)
+- bump version to v26.10.11 (@ahmed-alnassif)
+- bump version to v2.3.0-f55930f (@ahmed-alnassif)
+- bump version to v2.3.0-1e6fb20 (@ahmed-alnassif)
+- bump version to v2.3.0-99af3c2 (@ahmed-alnassif)
+- bump version to v2.3.0-eb224b2 (@ahmed-alnassif)
+- bump version to v2.3.0-edb5e2f (@ahmed-alnassif)
+- bump version to v2.3.0-d348051 (@ahmed-alnassif)
+
+### 📦 Other
+
+- Merge remote-tracking branch 'wswzgdg/dev' into dev (@wswzgdg)
+- avoid installer log pollution in changed-file list (@wswzgdg)
+- merge duplicate config prompts into one installer choice (@wswzgdg)
+- fix release tag lookup and update module updateJson (@wswzgdg)
+- add LKM installer and bump module version (@wswzgdg)
+- Merge remote-tracking branch 'origin/dev' into dev (@wswzgdg)
+
+### 🤖 Automated
+
+- docs: update CHANGELOG.md for v26.10.14-lkm
+- docs: update CHANGELOG.md for v26.10.13
+- webui(deps): Bump the webui-deps group in /webui with 7 updates (#24)
+- docs: update CHANGELOG.md for v26.10.11
+- docs: update CHANGELOG.md for v2.3.0-f55930f
+- docs: update CHANGELOG.md for v2.3.0-1e6fb20
+- webui(deps): Bump the webui-deps group in /webui with 3 updates (#22)
+- docs: update CHANGELOG.md for v2.3.0-99af3c2
+- webui(deps): Bump the webui-deps group in /webui with 6 updates (#19)
+- docs: update CHANGELOG.md for v2.3.0-eb224b2
+- docs: update CHANGELOG.md for v2.3.0-edb5e2f
+- webui(deps): Bump the webui-deps group in /webui with 4 updates (#17)
+- webui(deps): Bump the webui-deps group in /webui with 4 updates (#16)
+- webui: new Crowdin translations by GitHub Action (#15)
+- docs: update CHANGELOG.md for v2.3.0-d348051
+- webui: new Crowdin translations by GitHub Action (#14)
+- New Crowdin translations by GitHub Action (#12)
 - webui/locales: sync translation from Crowdin (#11)
 
 ## [v26.10.14-lkm] - 2026-10-14
