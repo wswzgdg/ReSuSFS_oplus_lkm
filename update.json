@@ -1,6 +1,6 @@
 {
-  "version": "v26.10.13",
-  "versionCode": 19,
-  "zipUrl": "https://github.com/ahmed-alnassif/ReSuSFS/releases/latest/download/ReSuSFS.zip",
-  "changelog": "https://raw.githubusercontent.com/ahmed-alnassif/ReSuSFS/dev/CHANGELOG.md"
+  "version": "v26.10.14-lkm",
+  "versionCode": 20,
+  "zipUrl": "https://github.com/wswzgdg/ReSuSFS_oplus_lkm/releases/latest/download/ReSuSFS.zip",
+  "changelog": "https://raw.githubusercontent.com/wswzgdg/ReSuSFS_oplus_lkm/dev/CHANGELOG.md"
 }

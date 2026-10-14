@@ -1,4 +1,19 @@
 
+## [v26.10.14-lkm] - 2026-10-14
+
+### ✨ Features
+
+- feat(LKM): adapt for oneplus-susfs4ksu-lkm
+  - proc interface command mappings (kstat/path/redirect/enable_log/avc_spoof/hide_modules/hide_mounts)
+  - WebUI hidden modules management section
+  - LKM-only mode status reporting with interface enumeration
+  - Fix printf escaping in toggle/status commands
+  - Simplify version comparison logic
+
+### 📚 Documentation
+
+- Update README with LKM support section
+
 ## [v26.10.13] - 2026-10-13
 
 
