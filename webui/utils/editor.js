@@ -6,7 +6,6 @@ import { shell } from '@codemirror/legacy-modes/mode/shell';
 import { tags as t } from '@lezer/highlight';
 
 import { updateUIVisibility } from './util.js';
-import { keepLayerOpen } from './history.js';
 
 let setupEditor = false;
 let codeEditor;
@@ -166,16 +165,9 @@ function ensureUnsavedDialogWired() {
 }
 
 export function closeEditor() {
-    const dialog = document.getElementById('unsaved-changes-dialog');
-
     if (isDirty() && !forceDiscardNext) {
         ensureUnsavedDialogWired();
-        if (dialog?.open) {
-            dialog.close();
-        } else {
-            dialog?.show();
-        }
-        keepLayerOpen(document.getElementById('edit-content'));
+        document.getElementById('unsaved-changes-dialog')?.show();
         return;
     }
     forceDiscardNext = false;
