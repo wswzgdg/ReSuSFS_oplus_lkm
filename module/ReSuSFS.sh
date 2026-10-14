@@ -13,8 +13,6 @@ LKM_ASSET=/data/adb/loader/susfs_guard_lkm.ko
 
 . "$MODDIR/utils.sh"
 
-versionCode=$(grep versionCode $MODDIR/module.prop | sed 's/versionCode=//g' )
-
 [ -n "$WEBUI_QUIET" ] && [ "${NO_BANNER:-0}" = "0" ] && banner
 
 lkm_enabled() { [ -f "$PERSISTENT_DIR/lkm_enabled" ] && [ "$(cat "$PERSISTENT_DIR/lkm_enabled" 2>/dev/null)" = 1 ]; }
@@ -157,7 +155,7 @@ sync_cron_scripts() {
 		echo "$schedule { echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] START $name\"; sh $MODDIR/ReSuSFS.sh --run-script $USER_SCRIPTS_DIR/$name; echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] END $name exit=\$?\"; } >> $PERSISTENT_DIR/cron.log 2>&1" >> "$tmp"
 	done
 
-	busybox crontab -c "$CROND_DIR" "$tmp" 2>/dev/null
+	busybox crontab -c "$CROND_DIR" "$tmp" 2>/dev/null || { rm -f "$tmp"; echo "[-] failed to install cron schedule"; return 1; }
 	rm -f "$tmp"
 
 	echo "[+] cron schedule synced"
@@ -220,6 +218,7 @@ apply_kstat() {
 	echo "$list" | while IFS= read -r line; do
 		# split the line once instead of forking awk + cut; globbing off so paths with * survive
 		set -f
+		# shellcheck disable=SC2086
 		set -- $line
 		set +f
 		path="$1"
@@ -254,6 +253,7 @@ apply_open_redirect() {
 	echo "$list" | while IFS= read -r line; do
 		# one word-split instead of three awk passes; globbing off so paths with * survive
 		set -f
+		# shellcheck disable=SC2086
 		set -- $line
 		set +f
 		target="$1"
@@ -495,12 +495,7 @@ case "$1" in
 	--status) show_status; exit ;;
 	--status-report) status_report; exit ;;
 	--lkm-install) sh "$MODDIR/install_susfs_lkm.sh"; exit $? ;;
-	--lkm-enable)
-			check_lkm_asset || exit 1
-			mkdir -p "$PERSISTENT_DIR"
-			echo 1 > "$PERSISTENT_DIR/lkm_enabled"
-			echo "[+] LKM enabled for next boot"
-			exit ;;
+	--lkm-enable) check_lkm_asset || exit 1; mkdir -p "$PERSISTENT_DIR"; echo 1 > "$PERSISTENT_DIR/lkm_enabled"; echo "[+] LKM enabled for next boot"; exit ;;
 	--lkm-disable) rm -f "$PERSISTENT_DIR/lkm_enabled"; echo "[+] LKM disabled for next boot"; exit ;;
 	--apply-sus-paths) apply_sus_paths "$2"; exit ;;
 	--apply-sus-paths-loop) apply_sus_paths_loop "$2"; exit ;;
