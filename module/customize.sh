@@ -49,15 +49,15 @@ collect_changed() {
 apply_changed() {
 	while IFS= read -r file; do
 		[ -n "$file" ] || continue
-		if [ "${file#scripts/}" != "$file" ]; then
-			src="$CONFIG_DIR/scripts/${file#scripts/}"
-			dst="$PERSISTENT_DIR/scripts/${file#scripts/}"
+		if [ -f "$CONFIG_DIR/$file" ]; then
+			src="$CONFIG_DIR/$file"
+			dst="$PERSISTENT_DIR/$file"
 		elif [ -f "$CONFIG_DIR/scripts/$file" ]; then
 			src="$CONFIG_DIR/scripts/$file"
 			dst="$PERSISTENT_DIR/scripts/$file"
 		else
-			src="$CONFIG_DIR/$file"
-			dst="$PERSISTENT_DIR/$file"
+			ui_print "[-] $file not found, skipping"
+			continue
 		fi
 		mkdir -p "$(dirname "$dst")"
 		cp "$src" "$dst" || { ui_print "[-] $file update failed"; continue; }
@@ -65,17 +65,12 @@ apply_changed() {
 	done
 }
 
+# get_all_files returns paths relative to $CONFIG_DIR, so one pass covers both
+# the top-level config files and everything under scripts/.
 mkdir -p "$PERSISTENT_DIR"
 CHANGED_FILES=$(mktemp -p "$PERSISTENT_DIR" '.changed.XXXXXX' 2>/dev/null || printf '%s' "$PERSISTENT_DIR/.changed.$$")
 : > "$CHANGED_FILES"
-if [ -d "$CONFIG_DIR/scripts" ]; then
-	collect_changed "$CONFIG_DIR" "$PERSISTENT_DIR" "$(get_all_files "$CONFIG_DIR/scripts" | sed 's|^|scripts/|')"
-fi
-
-CONFIG_FILES=$(get_all_files "$CONFIG_DIR" | grep -v '^scripts/')
-if [ -n "$CONFIG_FILES" ]; then
-	collect_changed "$CONFIG_DIR" "$PERSISTENT_DIR" "$CONFIG_FILES"
-fi
+collect_changed "$CONFIG_DIR" "$PERSISTENT_DIR" "$(get_all_files "$CONFIG_DIR")"
 
 if [ -s "$CHANGED_FILES" ]; then
 	ui_print "[*] Changed files:"

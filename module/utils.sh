@@ -29,7 +29,8 @@ retryable_code() {
 }
 
 download_file() {
-	local url="$1" out="$2" attempt=1 curl=/system/bin/curl
+	# $3-$5 default to the KernelSU paths, so tests can inject stand-ins.
+	local url="$1" out="$2" attempt="${3:-1}" curl="${4:-/system/bin/curl}" busybox="${5:-/data/adb/ksu/bin/busybox}"
 	[ -x "$curl" ] || { echo "[!] Android curl not found at $curl"; return 1; }
 	while [ "$attempt" -le 3 ]; do
 		echo "[*] Download attempt $attempt/3: $url"
@@ -43,7 +44,7 @@ download_file() {
 		esac
 		rm -f "$out"
 		if ! retryable_code "$code"; then echo "[!] HTTP $code is not retryable"; return 1; fi
-		if [ "$attempt" -lt 3 ]; then echo "[*] Retrying in 3 seconds..."; busybox sleep 3; fi
+		if [ "$attempt" -lt 3 ]; then echo "[*] Retrying in 3 seconds..."; "$busybox" sleep 3; fi
 		attempt=$((attempt + 1))
 	done
 	echo "[!] All download attempts failed"

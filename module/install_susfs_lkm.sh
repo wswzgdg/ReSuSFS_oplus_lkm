@@ -3,7 +3,6 @@ set -eu
 API=https://api.github.com/repos/inforcqb/oneplus-susfs4ksu-lkm/releases/latest
 REPO=https://github.com/inforcqb/oneplus-susfs4ksu-lkm
 DEST=/data/adb/loader/susfs_guard_lkm.ko
-CURL=/system/bin/curl
 KMI=$(ksud boot-info current-kmi 2>/dev/null) || { echo "[x] Cannot read current KMI" >&2; exit 1; }
 case "$KMI" in android[0-9]*-[0-9]*.[0-9]*) ;; *) echo "[x] Invalid current KMI: $KMI" >&2; exit 1 ;; esac
 case "$KMI" in *[!a-zA-Z0-9._-]*) echo "[x] Invalid current KMI" >&2; exit 1 ;; esac
@@ -13,30 +12,13 @@ trap 'rm -rf "$WORK"' EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
-retryable_code() {
-    case "$1" in
-        000|408|429|5[0-9][0-9]) return 0 ;;
-        *) return 1 ;;
-    esac
-}
-fetch() {
-    attempt=1
-    while [ "$attempt" -le 3 ]; do
-        echo "[*] Download attempt $attempt/3: $1" >&2
-        code=$("$CURL" --silent --show-error --location --connect-timeout 15 --max-time 120 --output "$2" --write-out '%{http_code}' "$1") || code=000
-        case "$code" in
-            2*) echo "[+] Download successful" >&2; return 0 ;;
-        esac
-        echo "[-] Download failed (HTTP $code)" >&2
-        rm -f "$2"
-        if ! retryable_code "$code"; then echo "[!] HTTP $code is not retryable" >&2; return 1; fi
-        if [ "$attempt" -lt 3 ]; then /data/adb/ksu/bin/busybox sleep 3; fi
-        attempt=$((attempt + 1))
-    done
-    echo "[!] All download attempts failed: $1" >&2
-    return 1
-}
-if fetch "$API" "$WORK/release.json"; then
+# download_file() lives in utils.sh. PATH is restored right after sourcing so the
+# tools this script calls keep resolving to the same binaries.
+[ -n "${MODPATH:-}" ] || MODPATH="$(cd "$(dirname "$0")" && pwd)"
+PATH_BEFORE="$PATH"
+. "$MODPATH/utils.sh"
+PATH="$PATH_BEFORE"
+if download_file "$API" "$WORK/release.json"; then
     result=$(/data/adb/ksu/bin/busybox awk -v wanted="$NAME" '
     function get(k,s,t){t=s;if(t !~ "\\\"" k "\\\"[[:space:]]*:")return "";sub(".*\\\"" k "\\\"[[:space:]]*:[[:space:]]*\\\"","",t);sub("\\\".*","",t);return t}
     /^[[:space:]]*"assets"[[:space:]]*:/ {a=1}
@@ -53,10 +35,10 @@ fi
 if [ -n "${result:-}" ]; then
     URL=${result%% *}; EXPECTED=${result#* }
 else
-    fetch "$REPO/releases/latest" "$WORK/latest.html" || { echo "[x] Cannot read latest release page" >&2; exit 1; }
+    download_file "$REPO/releases/latest" "$WORK/latest.html" || { echo "[x] Cannot read latest release page" >&2; exit 1; }
     TAG=$(grep -oE "releases/tag/[A-Za-z0-9._-]+" "$WORK/latest.html" | head -n 1 | cut -d/ -f3)
     [ -n "$TAG" ] || { echo "[x] Cannot determine latest release tag" >&2; exit 1; }
-    fetch "$REPO/releases/expanded_assets/$TAG" "$WORK/assets.html" || { echo "[x] Cannot read release assets" >&2; exit 1; }
+    download_file "$REPO/releases/expanded_assets/$TAG" "$WORK/assets.html" || { echo "[x] Cannot read release assets" >&2; exit 1; }
     result=$(/data/adb/ksu/bin/busybox awk -v wanted="$NAME" -v tag="$TAG" '
     /<li[ >]/ { row=""; inside=1 }
     inside { row=row $0 " " }
@@ -88,7 +70,7 @@ case "$URL" in
     *) echo "[x] Unexpected download host or repository" >&2; exit 1 ;;
 esac
 [ -n "$EXPECTED" ] || { echo "[x] No trusted SHA-256 digest for $NAME" >&2; exit 1; }
-fetch "$URL" "$WORK/$NAME" || { echo "[x] Asset download failed" >&2; exit 1; }
+download_file "$URL" "$WORK/$NAME" || { echo "[x] Asset download failed" >&2; exit 1; }
 ACTUAL=$(/system/bin/sha256sum "$WORK/$NAME" | cut -d' ' -f1)
 [ "$ACTUAL" = "$EXPECTED" ] || { echo "[x] SHA-256 mismatch" >&2; exit 1; }
 if [ "${1:-}" = --dry-run ]; then echo "[+] Verified $NAME from latest release; SHA-256 $ACTUAL (dry run, not installed)"; exit 0; fi
