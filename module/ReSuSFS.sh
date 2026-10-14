@@ -25,6 +25,17 @@ check_lkm_asset() {
 	current_kmi=$(ksud boot-info current-kmi 2>/dev/null) || { echo "[x] Cannot determine current KMI"; return 1; }
 	[ "$(cat "$LKM_ASSET".kmi 2>/dev/null)" = "$current_kmi" ] || { echo "[x] LKM asset KMI does not match current KMI $current_kmi; download/update it first"; return 1; }
 }
+# Loads the LKM now if it is not loaded yet. Called right after install so the
+# module does not need a reboot, and by stage_early so it is loaded on boot.
+load_lkm() {
+	if lkm_loaded; then
+		echo "[+] SUSFS LKM already loaded"
+		return 0
+	fi
+	check_lkm_asset || return 1
+	ksud insmod "$LKM_ASSET" || { echo "[x] SUSFS LKM load failed"; return 1; }
+	echo "[+] SUSFS LKM loaded"
+}
 susfs() {
     if [ -x "$SUSFS_BIN" ]; then
         if "$SUSFS_BIN" "$@"; then return 0; else rc=$?; fi
@@ -408,14 +419,7 @@ apply_toggles() {
 
 stage_early() {
 	echo "[+] stage: early (post-fs-data)"
-	if lkm_enabled; then
-		if lkm_loaded; then echo "[+] SUSFS LKM already loaded"
-		elif check_lkm_asset; then
-			ksud insmod "$LKM_ASSET" || { echo "[x] SUSFS LKM load failed; skipping SUSFS rules"; return 1; }
-		else
-			return 1
-		fi
-	fi
+	if lkm_enabled && ! load_lkm; then return 1; fi
 	if [ ! -x "$SUSFS_BIN" ] && ! lkm_loaded; then echo "[x] neither SUSFS CLI nor loaded LKM is available; skipping SUSFS rules"; return 1; fi
 	apply_kstat_add
 	if [ -x "$SUSFS_BIN" ]; then
@@ -494,8 +498,9 @@ case "$1" in
 	--stage-late) stage_late; exit ;;
 	--status) show_status; exit ;;
 	--status-report) status_report; exit ;;
-	--lkm-install) sh "$MODDIR/install_susfs_lkm.sh"; exit $? ;;
-	--lkm-enable) check_lkm_asset || exit 1; mkdir -p "$PERSISTENT_DIR"; echo 1 > "$PERSISTENT_DIR/lkm_enabled"; echo "[+] LKM enabled for next boot"; exit ;;
+	--lkm-install) sh "$MODDIR/install_susfs_lkm.sh" && load_lkm; exit $? ;;
+	--lkm-load) load_lkm; exit $? ;;
+	--lkm-enable) check_lkm_asset || exit 1; mkdir -p "$PERSISTENT_DIR"; echo 1 > "$PERSISTENT_DIR/lkm_enabled" && load_lkm; exit $? ;;
 	--lkm-disable) rm -f "$PERSISTENT_DIR/lkm_enabled"; echo "[+] LKM disabled for next boot"; exit ;;
 	--apply-sus-paths) apply_sus_paths "$2"; exit ;;
 	--apply-sus-paths-loop) apply_sus_paths_loop "$2"; exit ;;

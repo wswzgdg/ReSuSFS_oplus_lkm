@@ -65,8 +65,6 @@ apply_changed() {
 	done
 }
 
-# get_all_files returns paths relative to $CONFIG_DIR, so one pass covers both
-# the top-level config files and everything under scripts/.
 mkdir -p "$PERSISTENT_DIR"
 CHANGED_FILES=$(mktemp -p "$PERSISTENT_DIR" '.changed.XXXXXX' 2>/dev/null || printf '%s' "$PERSISTENT_DIR/.changed.$$")
 : > "$CHANGED_FILES"
@@ -88,22 +86,23 @@ rm -f "$CHANGED_FILES"
 
 rm -rf "$CONFIG_DIR"
 
-# update_susfs fetches the userland ksu_susfs CLI; only after it is in place is
-# it possible to tell whether the kernel side actually works. Ask about the LKM
-# after that, like the config prompt above: nothing to ask when the native path
-# works.
 update_susfs || exit 1
 
 brand=$(getprop ro.product.brand | tr '[:upper:]' '[:lower:]')
 manufacturer=$(getprop ro.product.manufacturer | tr '[:upper:]' '[:lower:]')
 if echo "$brand $manufacturer" | grep -Eq 'oppo|oneplus|realme' && ! "$DEST_BIN_DIR/ksu_susfs" show version >/dev/null 2>&1; then
 	ui_print "[*] No working native ksu_susfs detected. Optional exact-KMI SUSFS LKM download?"
-	ui_print "[*] VOLUME UP to download and enable for next boot, DOWN to skip"
+	ui_print "[*] VOLUME UP to download and load now, DOWN to skip"
 	if detect_key_press; then
 		if sh "$MODPATH/install_susfs_lkm.sh"; then
 			mkdir -p "$PERSISTENT_DIR"
 			echo 1 > "$PERSISTENT_DIR/lkm_enabled"
-			ui_print "[+] LKM installed and enabled for next boot; reboot required"
+			if sh "$MODPATH/ReSuSFS.sh" --lkm-load; then
+				ui_print "[+] LKM installed and loaded now; no reboot required for it"
+				ui_print "[*] the remaining SUSFS rules apply at next boot"
+			else
+				ui_print "[!] LKM installed and enabled, but not loaded now; it will load at next boot"
+			fi
 		else
 			ui_print "[!] LKM install failed; continuing without it"
 		fi

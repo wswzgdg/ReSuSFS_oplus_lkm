@@ -17,12 +17,12 @@
     <string name="lkm_checking">Checking optional kernel module…</string>
     <string name="lkm_state">LKM: %s; startup: %s</string>
     <string name="lkm_loaded">loaded</string>
-    <string name="lkm_installed">installed, reboot to load</string>
+    <string name="lkm_installed">installed, not loaded</string>
     <string name="lkm_missing">not installed</string>
     <string name="lkm_enabled">enabled</string>
     <string name="lkm_disabled">disabled</string>
-    <string name="lkm_enable">Enable for next boot</string>
-    <string name="lkm_disable">Disable for next boot</string>
+    <string name="lkm_enable">Enable</string>
+    <string name="lkm_disable">Disable</string>
     <string name="lkm_install">Download / update</string>
     <string name="lkm_interfaces">Detected runtime interfaces: %s</string>
     <string name="lkm_no_interfaces">none detected</string>

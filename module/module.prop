@@ -1,7 +1,7 @@
 id=ReSuSFS
 name=ReSuSFS
-version=v26.10.16-lkm
-versionCode=22
+version=v26.10.18-lkm
+versionCode=24
 author=ahmed-alnassif
 updateJson=https://raw.githubusercontent.com/wswzgdg/ReSuSFS_oplus_lkm/dev/update.json
 description=The easiest way to use SuSFS on KernelSU. Strong hiding by default with built-in spoofing and hiding scripts, config files and toggle switches for everyday use, a built-in script manager for power users. LKM support for OnePlus/OPPO/Realme devices without native SUSFS.
