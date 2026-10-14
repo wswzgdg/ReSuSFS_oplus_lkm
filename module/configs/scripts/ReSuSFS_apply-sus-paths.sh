@@ -14,9 +14,8 @@ echo "/system/addon.d" >> "$LIST_FILE"
 
 for rom in $ROM_NAMES; do
 	find /system /vendor /product /system_ext -iname "*${rom}*" 2>/dev/null >> "$LIST_FILE"
+	find /data -maxdepth 1 -iname "*${rom}*" 2>/dev/null >> "$LIST_FILE"
 done
-
-find /data -maxdepth 1 -iname "*${rom}*" 2>/dev/null >> "$LIST_FILE"
 
 if [ -s "$LIST_FILE" ]; then
 	if ReSuSFS --apply-sus-paths "$LIST_FILE"; then

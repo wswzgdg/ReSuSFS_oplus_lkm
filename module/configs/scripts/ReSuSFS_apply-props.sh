@@ -40,7 +40,8 @@ resetprop -d ro.boot.verifiedbooterror 2>/dev/null
 resetprop -d crashrecovery.rescue_boot_count 2>/dev/null
 
 fingerprint=$(resetprop ro.build.fingerprint)
-spoofed=$(printf '%s' "$fingerprint" | sed -e 's/userdebug/user/' -e 's/lineage//' -e 's/crdroid//')
+# sed -E so the alternation in ROM_NAMES means the same thing grep -iE above does.
+spoofed=$(printf '%s' "$fingerprint" | sed -E "s/userdebug/user/;s/${ROM_NAMES}//g")
 set_prop_if_present ro.build.fingerprint "$spoofed"
 
 resetprop -c --force 2>/dev/null

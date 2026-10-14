@@ -5,8 +5,11 @@ PERSISTENT_DIR="/data/adb/ReSuSFS"
 USER_SCRIPTS_DIR="$PERSISTENT_DIR/scripts"
 POSTFS_SCRIPTS_FILE="$PERSISTENT_DIR/scripts_postfs.txt"
 BOOTCOMPLETED_SCRIPTS_FILE="$PERSISTENT_DIR/scripts_bootcompleted.txt"
+CRON_SCRIPTS_FILE="$PERSISTENT_DIR/scripts_cron.txt"
+CROND_DIR="$PERSISTENT_DIR/crontabs"
 SUSFS_BIN=/data/adb/ksu/bin/ksu_susfs
 SUSFS_MIN_VERSION="v2.2.0"
+LKM_ASSET=/data/adb/loader/susfs_guard_lkm.ko
 
 . "$MODDIR/utils.sh"
 
@@ -16,6 +19,14 @@ versionCode=$(grep versionCode $MODDIR/module.prop | sed 's/versionCode=//g' )
 
 lkm_enabled() { [ -f "$PERSISTENT_DIR/lkm_enabled" ] && [ "$(cat "$PERSISTENT_DIR/lkm_enabled" 2>/dev/null)" = 1 ]; }
 lkm_loaded() { [ -d /sys/module/susfs_guard_lkm ]; }
+
+# Prints why the LKM asset cannot be used and returns 1; 0 means it is usable.
+# Also sets current_kmi, for callers that want to show it.
+check_lkm_asset() {
+	[ -f "$LKM_ASSET" ] || { echo "[x] LKM asset is missing; install it first"; return 1; }
+	current_kmi=$(ksud boot-info current-kmi 2>/dev/null) || { echo "[x] Cannot determine current KMI"; return 1; }
+	[ "$(cat "$LKM_ASSET".kmi 2>/dev/null)" = "$current_kmi" ] || { echo "[x] LKM asset KMI does not match current KMI $current_kmi; download/update it first"; return 1; }
+}
 susfs() {
     if [ -x "$SUSFS_BIN" ]; then
         if "$SUSFS_BIN" "$@"; then return 0; else rc=$?; fi
@@ -64,8 +75,6 @@ version_ge() {
 	}'
 }
 
-[ ! -d "$PERSISTENT_DIR" ] && mkdir -p "$PERSISTENT_DIR"
-
 get_conf() {
 	file="${3:-$PERSISTENT_DIR/config.txt}"
 	val=$(grep "^$1=" "$file" 2>/dev/null | tail -n1 | cut -d'=' -f2-)
@@ -78,13 +87,36 @@ read_list() {
 	sed 's/#.*//' "$1" | grep -v '^[[:space:]]*$'
 }
 
+# Rewrite $1 in place with duplicate lines removed, keeping comments.
+# $2 = 1 also drops blank lines.
+dedupe_file() {
+	file="$1"
+	[ -f "$file" ] || return 0
+	tmp="${file}.tmp.$$"
+	busybox awk -v skip_blank="$2" '
+		/^[[:space:]]*#/ { print; next }
+		skip_blank == "1" && /^[[:space:]]*$/ { next }
+		!seen[$0]++
+	' "$file" > "$tmp" && cat "$tmp" > "$file"
+	rm -f "$tmp"
+}
+
+# Validate a config input file: .txt extension, exists, readable, non-empty.
+check_txt_input() {
+	case "$1" in
+		*.txt) : ;;
+		*) echo "[x] only .txt files allowed: $1"; return 1 ;;
+	esac
+	[ -f "$1" ] || { echo "[x] file not found: $1"; return 1; }
+	[ -r "$1" ] || { echo "[x] file not readable: $1"; return 1; }
+	[ -s "$1" ] || { echo "[x] file empty: $1"; return 1; }
+}
+
 [ ! -d "$USER_SCRIPTS_DIR" ] && mkdir -p "$USER_SCRIPTS_DIR"
 [ ! -f "$POSTFS_SCRIPTS_FILE" ] && : > "$POSTFS_SCRIPTS_FILE"
 [ ! -f "$BOOTCOMPLETED_SCRIPTS_FILE" ] && : > "$BOOTCOMPLETED_SCRIPTS_FILE"
 
-CRON_SCRIPTS_FILE="$PERSISTENT_DIR/scripts_cron.txt"
 [ ! -f "$CRON_SCRIPTS_FILE" ] && : > "$CRON_SCRIPTS_FILE"
-CROND_DIR="$PERSISTENT_DIR/crontabs"
 
 run_stage_scripts() {
 	stage_file="$1"
@@ -133,30 +165,24 @@ sync_cron_scripts() {
 
 run_script() {
 	script="$1"
-	[ -z "$script" ] && { echo "[x] no script specified"; echo "[!] syntax: --run-script <path>"; exit 1; }
+	[ -z "$script" ] && { echo "[x] no script specified"; echo "[!] syntax: --run-script <path>"; return 1; }
 	case "$script" in
 		*.sh) : ;;
-		*) echo "[x] only .sh files allowed: $script"; exit 1 ;;
+		*) echo "[x] only .sh files allowed: $script"; return 1 ;;
 	esac
-	[ -f "$script" ] || { echo "[x] script not found: $script"; exit 1; }
-	[ -r "$script" ] || { echo "[x] script not readable: $script"; exit 1; }
+	[ -f "$script" ] || { echo "[x] script not found: $script"; return 1; }
+	[ -r "$script" ] || { echo "[x] script not readable: $script"; return 1; }
 	echo "[>] running $script"
 	sh "$script"
-	echo "[*] exit code: $?"
+	rc=$?
+	echo "[*] exit code: $rc"
+	return "$rc"
 }
 
 apply_list() {
 	default="$1"; cmd="$2"; mode="$3"; file="${4:-$default}"
 
-	if [ -f "$file" ]; then
-		tmp="${file}.tmp.$$"
-		busybox awk '
-			/^[[:space:]]*#/ { print; next }
-			/^[[:space:]]*$/ { next }
-			!seen[$0]++
-		' "$file" > "$tmp" && cat "$tmp" > "$file"
-		rm -f "$tmp"
-	fi
+	dedupe_file "$file" 1
 
 	list=$(read_list "$file") || return
 	[ -z "$list" ] && return
@@ -172,24 +198,11 @@ append_to_default() {
 	default="$1"
 	src="${2:-$default}"
 	[ "$src" = "$default" ] && return 0
-	case "$src" in
-		*.txt) : ;;
-		*) echo "[x] only .txt files allowed: $src"; return 1 ;;
-	esac
-	[ -f "$src" ] || { echo "[x] file not found: $src"; return 1; }
-	[ -r "$src" ] || { echo "[x] file not readable: $src"; return 1; }
-	[ -s "$src" ] || { echo "[x] file empty: $src"; return 1; }
+	check_txt_input "$src" || return 1
 
 	cat "$src" >> "$default"
 
-	tmp="${default}.tmp.$$"
-	busybox awk '
-		/^[[:space:]]*#/ { print; next }
-		!seen[$0]++
-	' "$default" > "$tmp" && {
-		cat "$tmp" > "$default"
-		rm -f "$tmp"
-	}
+	dedupe_file "$default" 0
 
 	echo "[>] appended $src -> $default"
 }
@@ -205,14 +218,18 @@ apply_kstat() {
 	list=$(read_list "$file") || return
 	[ -z "$list" ] && return
 	echo "$list" | while IFS= read -r line; do
-		path=$(echo "$line" | awk '{print $1}')
+		# split the line once instead of forking awk + cut; globbing off so paths with * survive
+		set -f
+		set -- $line
+		set +f
+		path="$1"
 		[ -z "$path" ] && continue
-		args=$(echo "$line" | cut -d' ' -f2-)
+		shift
 		case "$mode" in
 			add)
-				if [ -n "$args" ]; then
-					echo "[>] add_sus_kstat_statically $path $args"
-					susfs add_sus_kstat_statically "$path" $args
+				if [ $# -gt 0 ]; then
+					echo "[>] add_sus_kstat_statically $path $*"
+					susfs add_sus_kstat_statically "$path" "$@"
 				else
 					echo "[>] add_sus_kstat $path"
 					susfs add_sus_kstat "$path"
@@ -235,9 +252,13 @@ apply_open_redirect() {
 	list=$(read_list "$file") || return
 	[ -z "$list" ] && return
 	echo "$list" | while IFS= read -r line; do
-		target=$(echo "$line" | awk '{print $1}')
-		redirect=$(echo "$line" | awk '{print $2}')
-		scheme=$(echo "$line" | awk '{print $3}')
+		# one word-split instead of three awk passes; globbing off so paths with * survive
+		set -f
+		set -- $line
+		set +f
+		target="$1"
+		redirect="$2"
+		scheme="$3"
 		if [ -z "$target" ] || [ -z "$redirect" ] || [ -z "$scheme" ]; then continue; fi
 		[ -e "$target" ] && [ -e "$redirect" ] || { echo "[!] skip: $target -> $redirect (missing endpoint)"; continue; }
 		echo "[>] add_open_redirect $target -> $redirect (scheme $scheme)"
@@ -247,40 +268,36 @@ apply_open_redirect() {
 
 
 
+# Read release= and version= from $1 into release/version; 1 if either is missing.
+read_uname_conf() {
+	release=$(get_conf release "" "$1")
+	version=$(get_conf version "" "$1")
+	[ -n "$release" ] || { echo "[x] release missing in $1"; return 1; }
+	[ -n "$version" ] || { echo "[x] version missing in $1"; return 1; }
+}
+
 apply_uname() {
 	[ -n "$1" ] && {
-		case "$1" in
-			*.txt) : ;;
-			*) echo "[x] only .txt files allowed: $1"; return 1 ;;
-		esac
-		[ -f "$1" ] || { echo "[x] file not found: $1"; return 1; }
-		[ -r "$1" ] || { echo "[x] file not readable: $1"; return 1; }
-		[ -s "$1" ] || { echo "[x] file empty: $1"; return 1; }
+		check_txt_input "$1" || return 1
 
-		release=$(grep "^release=" "$1" | tail -n1 | cut -d'=' -f2-)
-		version=$(grep "^version=" "$1" | tail -n1 | cut -d'=' -f2-)
+		# Validate the incoming pair before rewriting the persisted one.
+		read_uname_conf "$1" || return 1
 
-		[ -z "$release" ] && { echo "[x] release missing in $1"; return 1; }
-		[ -z "$version" ] && { echo "[x] version missing in $1"; return 1; }
-
-		[ -f "$PERSISTENT_DIR/uname.txt" ] && {
-			cp "$PERSISTENT_DIR/uname.txt" "${PERSISTENT_DIR}/uname.txt.bak.$$"
-			grep -v "^release=" "$PERSISTENT_DIR/uname.txt" > "${PERSISTENT_DIR}/uname.txt.tmp.$$"
-			grep -v "^version=" "${PERSISTENT_DIR}/uname.txt.tmp.$$" > "$PERSISTENT_DIR/uname.txt"
-			rm -f "${PERSISTENT_DIR}/uname.txt.tmp.$$" "${PERSISTENT_DIR}/uname.txt.bak.$$"
-		}
-
-		printf "release=%s\nversion=%s\n" "$release" "$version" >> "$PERSISTENT_DIR/uname.txt"
+		tmp="${PERSISTENT_DIR}/uname.txt.tmp.$$"
+		if [ -f "$PERSISTENT_DIR/uname.txt" ]; then
+			grep -vE '^(release|version)=' "$PERSISTENT_DIR/uname.txt" > "$tmp"
+		else
+			: > "$tmp"
+		fi
+		printf 'release=%s\nversion=%s\n' "$release" "$version" >> "$tmp"
+		cat "$tmp" > "$PERSISTENT_DIR/uname.txt"
+		rm -f "$tmp"
 	}
 
 	file="$PERSISTENT_DIR/uname.txt"
 	[ -f "$file" ] || return
 
-	release=$(grep "^release=" "$file" | tail -n1 | cut -d'=' -f2-)
-	version=$(grep "^version=" "$file" | tail -n1 | cut -d'=' -f2-)
-
-	[ -z "$release" ] && { echo "[x] release missing in $file"; return 1; }
-	[ -z "$version" ] && { echo "[x] version missing in $file"; return 1; }
+	read_uname_conf "$file" || return 1
 
 	echo "[>] set_uname '$release' '$version'"
 	susfs set_uname "$release" "$version"
@@ -363,21 +380,29 @@ status_report() {
 	echo "[+] $susfs_version | $variant | features: $feat"
 }
 
+# Apply one toggle; suffix is only for the log line.
+set_toggle() {
+	cmd="$1"; value="$2"; suffix="${3:-}"
+	[ -n "$value" ] || return
+	echo "[>] $cmd $value$suffix"
+	susfs "$cmd" "$value" || echo "[!] $cmd toggle ignored"
+}
+
 apply_toggles() {
 	stage="$1"
 	file="${2:-$PERSISTENT_DIR/config.txt}"
 	[ -f "$file" ] || return
-	if [ "$stage" = "early" ]; then
-		hide_mnts=$(get_conf HIDE_SUS_MNTS_NON_SU "" "$file")
-		enable_log=$(get_conf ENABLE_LOG "" "$file")
-		avc_spoof=$(get_conf ENABLE_AVC_LOG_SPOOFING "" "$file")
 
-		[ -n "$hide_mnts" ] && { echo "[>] hide_sus_mnts_for_non_su_procs $hide_mnts (early)"; susfs hide_sus_mnts_for_non_su_procs "$hide_mnts" || echo "[!] hide_sus_mnts toggle ignored"; }
-		[ -n "$enable_log" ] && { echo "[>] enable_log $enable_log"; susfs enable_log "$enable_log" || echo "[!] enable_log toggle ignored"; }
-		[ -n "$avc_spoof" ] && { echo "[>] enable_avc_log_spoofing $avc_spoof"; susfs enable_avc_log_spoofing "$avc_spoof" || echo "[!] enable_avc_log_spoofing toggle ignored"; }
-	elif [ "$stage" = "late" ]; then
-		hide_mnts=$(get_conf HIDE_SUS_MNTS_NON_SU "" "$file")
-		[ -n "$hide_mnts" ] && { echo "[>] hide_sus_mnts_for_non_su_procs $hide_mnts (late)"; susfs hide_sus_mnts_for_non_su_procs "$hide_mnts" || echo "[!] hide_sus_mnts toggle ignored"; }
+	hide_mnts=$(get_conf HIDE_SUS_MNTS_NON_SU "" "$file")
+	enable_log=$(get_conf ENABLE_LOG "" "$file")
+	avc_spoof=$(get_conf ENABLE_AVC_LOG_SPOOFING "" "$file")
+
+	if [ "$stage" = "early" ]; then
+		set_toggle hide_sus_mnts_for_non_su_procs "$hide_mnts" " (early)"
+		set_toggle enable_log "$enable_log"
+		set_toggle enable_avc_log_spoofing "$avc_spoof"
+	else
+		set_toggle hide_sus_mnts_for_non_su_procs "$hide_mnts" " (late)"
 	fi
 }
 
@@ -385,35 +410,32 @@ stage_early() {
 	echo "[+] stage: early (post-fs-data)"
 	if lkm_enabled; then
 		if lkm_loaded; then echo "[+] SUSFS LKM already loaded"
-		elif [ -f /data/adb/loader/susfs_guard_lkm.ko ]; then
-			current_kmi=$(ksud boot-info current-kmi 2>/dev/null) || { echo "[x] Cannot determine current KMI; refusing LKM load"; return 1; }
-			if [ "$(cat /data/adb/loader/susfs_guard_lkm.ko.kmi 2>/dev/null)" != "$current_kmi" ]; then
-				echo "[x] LKM KMI marker is missing or does not match $current_kmi; refusing load"
-				return 1
-			fi
-			ksud insmod /data/adb/loader/susfs_guard_lkm.ko || { echo "[x] SUSFS LKM load failed; skipping SUSFS rules"; return 1; }
-		else echo "[x] SUSFS LKM enabled but asset is missing; skipping SUSFS rules"; return 1; fi
+		elif check_lkm_asset; then
+			ksud insmod "$LKM_ASSET" || { echo "[x] SUSFS LKM load failed; skipping SUSFS rules"; return 1; }
+		else
+			return 1
+		fi
 	fi
 	if [ ! -x "$SUSFS_BIN" ] && ! lkm_loaded; then echo "[x] neither SUSFS CLI nor loaded LKM is available; skipping SUSFS rules"; return 1; fi
 	apply_kstat_add
 	if [ -x "$SUSFS_BIN" ]; then
 		apply_uname
 		apply_cmdline_bootconfig
+		apply_open_redirect
 	else
-		echo "[!] ksu_susfs CLI missing; uname and cmdline spoof rules are unavailable"
+		echo "[!] ksu_susfs CLI missing; uname, cmdline spoof and open_redirect rules are skipped"
 	fi
-	apply_open_redirect
 	apply_toggles early
 }
 
 stage_late() {
 	echo "[+] stage: late (boot-completed)"
-	apply_sus_paths
 	if [ -x "$SUSFS_BIN" ]; then
+		apply_sus_paths
 		apply_sus_paths_loop
 		apply_sus_maps
 	else
-		echo "[!] ksu_susfs CLI missing; sus_path_loop and sus_map rules are unavailable"
+		echo "[!] ksu_susfs CLI missing; sus_paths, sus_path_loop and sus_map rules are skipped"
 	fi
 	apply_kstat_update
 	apply_toggles late
@@ -426,8 +448,6 @@ run() {
 	stage_late
 }
 
-action() { run; }
-
 show_status() {
 	if lkm_loaded && [ ! -x "$SUSFS_BIN" ]; then
 		echo "SUSFS LKM active; version and feature metadata unavailable"
@@ -435,7 +455,7 @@ show_status() {
 		[ -n "$ifaces" ] && echo "Available interfaces: $ifaces"
 		return 0
 	fi
-	echo "$susfs_version"
+	susfs show version
 	susfs show variant
 	susfs show enabled_features
 }
@@ -469,16 +489,14 @@ show_help () {
 }
 
 case "$1" in
-	--action) action; exit ;;
+	--action) run; exit ;;
 	--stage-early) stage_early; exit ;;
 	--stage-late) stage_late; exit ;;
 	--status) show_status; exit ;;
 	--status-report) status_report; exit ;;
 	--lkm-install) sh "$MODDIR/install_susfs_lkm.sh"; exit $? ;;
 	--lkm-enable)
-			[ -f /data/adb/loader/susfs_guard_lkm.ko ] || { echo "[x] install the LKM first"; exit 1; }
-			current_kmi=$(ksud boot-info current-kmi 2>/dev/null) || { echo "[x] Cannot determine current KMI"; exit 1; }
-			[ "$(cat /data/adb/loader/susfs_guard_lkm.ko.kmi 2>/dev/null)" = "$current_kmi" ] || { echo "[x] LKM asset KMI does not match current KMI $current_kmi; download/update it first"; exit 1; }
+			check_lkm_asset || exit 1
 			mkdir -p "$PERSISTENT_DIR"
 			echo 1 > "$PERSISTENT_DIR/lkm_enabled"
 			echo "[+] LKM enabled for next boot"
@@ -496,7 +514,7 @@ case "$1" in
 	--hide-modules-add) susfs add_hide_modules "$2"; exit $? ;;
 	--hide-modules-del) susfs del_hide_modules "$2"; exit $? ;;
 	--hide-modules-clear) susfs clear_hide_modules; exit $? ;;
-	--run-script) shift; run_script "$1"; exit ;;
+	--run-script) shift; run_script "$1"; exit $? ;;
 	--run-postfs-scripts) run_stage_scripts "$POSTFS_SCRIPTS_FILE"; exit ;;
 	--run-bootcompleted-scripts) run_stage_scripts "$BOOTCOMPLETED_SCRIPTS_FILE"; exit ;;
 	--sync-cron-scripts) sync_cron_scripts; exit ;;
