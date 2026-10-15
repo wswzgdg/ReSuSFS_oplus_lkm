@@ -29,12 +29,12 @@ inside && /<\/li>/ {
     inside=0
     if (index(row, "releases/download/" tag "/" wanted)) {
         digest=row
-        if (digest !~ "aria-label=\\\"Copy to clipboard digest for " wanted "\\"") next
-        sub(".*value=\\\"sha256:", "", digest)
+        if (digest !~ "aria-label=\"Copy to clipboard digest for " wanted "\\"") next
+        sub(".*value=\"sha256:", "", digest)
         sub("\\\".*", "", digest)
         if (length(digest)==64 && digest !~ /[^0-9a-fA-F]/) {
             path=row
-            sub(".*href=\\\"", "", path)
+            sub(".*href=\"", "", path)
             sub("\\\".*", "", path)
             if (path ~ /^\/inforcqb\/(oneplus-susfs4ksu-lkm|susfs4ksu-lkm)\/releases\/download\//) {
                 count++; P=path; D=digest
