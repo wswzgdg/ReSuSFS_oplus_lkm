@@ -29,13 +29,13 @@ inside && /<\/li>/ {
     inside=0
     if (index(row, "releases/download/" tag "/" wanted)) {
         digest=row
-        if (digest !~ "aria-label=\"Copy to clipboard digest for " wanted "\\"") next
-        sub(".*value=\"sha256:", "", digest)
-        sub("\\\".*", "", digest)
+        if (digest !~ "aria-label=\042Copy to clipboard digest for " wanted "\042") next
+        sub(".*value=\042sha256:", "", digest)
+        sub("\042.*", "", digest)
         if (length(digest)==64 && digest !~ /[^0-9a-fA-F]/) {
             path=row
-            sub(".*href=\"", "", path)
-            sub("\\\".*", "", path)
+            sub(".*href=\042", "", path)
+            sub("\042.*", "", path)
             if (path ~ /^\/inforcqb\/(oneplus-susfs4ksu-lkm|susfs4ksu-lkm)\/releases\/download\//) {
                 count++; P=path; D=digest
             }
@@ -51,7 +51,7 @@ else
     echo "[!] Release page has no unique exact-KMI asset digest; trying GitHub API" >&2
     if download_file "$API" "$WORK/release.json"; then
         result=$(/data/adb/ksu/bin/busybox awk -v wanted="$NAME" '
-        function get(k,s,t){t=s;if(t !~ "\\"" k "\\"[[:space:]]*:")return "";sub(".*\\"" k "\\"[[:space:]]*:[[:space:]]*\\\"", "",t);sub("\\".*","",t);return t}
+        function get(k,s,t){t=s;if(t !~ "\042" k "\042[[:space:]]*:")return "";sub(".*\042" k "\042[[:space:]]*:[[:space:]]*\\042", "",t);sub("\042.*","",t);return t}
         /^[[:space:]]*"assets"[[:space:]]*:/ {a=1}
         a && /^[[:space:]]*\][,]?[[:space:]]*$/ {a=0}
         a && /^[[:space:]]*\{[[:space:]]*$/ {o=1;n=u=d="";next}
