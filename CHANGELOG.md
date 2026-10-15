@@ -1,4 +1,11 @@
 
+## [v26.10.23-lkm] - 2026-10-15
+
+
+### 📦 Other
+
+- fix awk string escaping in install_susfs_lkm.sh, bump to v26.10.23-lkm (@wswzgdg)
+
 ## [v26.10.22-lkm] - 2026-10-15
 
 
