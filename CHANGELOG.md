@@ -1,3 +1,12 @@
+
+## [v26.10.24-lkm] - 2026-10-15
+
+
+### 📦 Other
+
+- fix awk \042 escaping for busybox awk, bump to v26.10.24-lkm (@wswzgdg)
+- merge fc486d0&6157c72 (@wswzgdg)
+- bump to v26.10.24-lkm (@wswzgdg)
 ## [v26.10.24-lkm] - 2026-10-15
 
 ### 📦 Other
