@@ -1,6 +1,6 @@
 {
-  "version": "v26.10.20-lkm",
-  "versionCode": 26,
-  "zipUrl": "https://github.com/wswzgdg/ReSuSFS_oplus_lkm/releases/latest/download/ReSuSFS.zip",
-  "changelog": "https://raw.githubusercontent.com/wswzgdg/ReSuSFS_oplus_lkm/dev/CHANGELOG.md"
+    "version": "v26.10.21-lkm",
+    "versionCode": 27,
+    "zipUrl": "https://github.com/wswzgdg/ReSuSFS_oplus_lkm/releases/latest/download/ReSuSFS.zip",
+    "changelog": "https://raw.githubusercontent.com/wswzgdg/ReSuSFS_oplus_lkm/dev/CHANGELOG.md"
 }

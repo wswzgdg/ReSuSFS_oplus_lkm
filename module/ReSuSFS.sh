@@ -163,7 +163,7 @@ sync_cron_scripts() {
 		name=$(echo "$line" | cut -d' ' -f6-)
 		[ -z "$name" ] && continue
 		[ -f "$USER_SCRIPTS_DIR/$name" ] || { echo "[!] cron script not found, skipping: $name"; continue; }
-		echo "$schedule { echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] START $name\"; sh $MODDIR/ReSuSFS.sh --run-script $USER_SCRIPTS_DIR/$name; echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] END $name exit=\$?\"; } >> $PERSISTENT_DIR/cron.log 2>&1" >> "$tmp"
+		echo "$schedule { echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] START $name\"; sh \"$MODDIR/ReSuSFS.sh\" --run-script \"$USER_SCRIPTS_DIR/$name\"; echo \"[\$(date '+%Y-%m-%d %H:%M:%S')] END $name exit=\$?\"; } >> \"$PERSISTENT_DIR/cron.log\" 2>&1" >> "$tmp"
 	done
 
 	busybox crontab -c "$CROND_DIR" "$tmp" 2>/dev/null || { rm -f "$tmp"; echo "[-] failed to install cron schedule"; return 1; }

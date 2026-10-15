@@ -17,5 +17,3 @@ sh "$MODDIR/boot-completed.sh" > /dev/null 2>&1
 sh "$MODDIR/service.sh" > /dev/null 2>&1
 
 echo "ReSuSFS: hot-install.sh done" >> /dev/kmsg
-
-# EOF
