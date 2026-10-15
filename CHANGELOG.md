@@ -1,4 +1,11 @@
 
+## [v26.10.20-lkm] - 2026-10-15
+
+
+### 📦 Other
+
+- add the SUSFS LKM strings to the translated locales, bump to v26.10.20-lkm (@wswzgdg)
+
 ## [v26.10.19-lkm] - 2026-10-15
 
 
