@@ -1,4 +1,12 @@
 
+## [v26.10.19-lkm] - 2026-10-15
+
+
+### 📦 Other
+
+- stop the release job from re-recording a version that already shipped (@wswzgdg)
+- say that the LKM button downloads and loads, bump to v26.10.19-lkm (@wswzgdg)
+
 ## [v26.10.18-lkm] - 2026-10-14
 
 
