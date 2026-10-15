@@ -1,4 +1,11 @@
 
+## [v26.10.21-lkm] - 2026-10-15
+
+
+### 📦 Other
+
+- quote cron paths, remove dead EOF marker, bump to v26.10.21-lkm (@wswzgdg)
+
 ## [v26.10.20-lkm] - 2026-10-15
 
 
