@@ -1,4 +1,11 @@
 
+## [v26.10.22-lkm] - 2026-10-15
+
+
+### 📦 Other
+
+- prefer HTML release page over GitHub API for LKM download, bump to v26.10.22-lkm (@wswzgdg)
+
 ## [v26.10.21-lkm] - 2026-10-15
 
 
