@@ -8,6 +8,25 @@
     <string name="status_binary_missing">двоичный файл ksu_susfs не найден</string>
     <string name="status_unknown">Неизвестен</string>
     <string name="status_feature_count">Функции %s включены</string>
+    <string name="lkm_command_success">Команда LKM выполнена успешно</string>
+    <string name="lkm_command_failed">Команда LKM не выполнена</string>
+    <string name="lkm_title">SUSFS LKM</string>
+    <string name="lkm_checking">Проверка необязательного модуля ядра…</string>
+    <string name="lkm_state">LKM: %s; при запуске: %s</string>
+    <string name="lkm_loaded">загружен</string>
+    <string name="lkm_installed">установлен, не загружен</string>
+    <string name="lkm_missing">не установлен</string>
+    <string name="lkm_enabled">включено</string>
+    <string name="lkm_disabled">выключено</string>
+    <string name="lkm_enable">Включить</string>
+    <string name="lkm_disable">Выключить</string>
+    <string name="lkm_install">Скачать и загрузить</string>
+    <string name="lkm_interfaces">Обнаруженные интерфейсы выполнения: %s</string>
+    <string name="lkm_no_interfaces">ничего не обнаружено</string>
+    <string name="lkm_cli_available">supercall CLI доступен</string>
+    <string name="lkm_cli_missing">supercall CLI отсутствует; некоторые действия конфигурации недоступны</string>
+    <string name="lkm_active_partial">SUSFS LKM активен</string>
+    <string name="lkm_no_metadata">Метаданные версии/варианта недоступны</string>
     <!-- Summary -->
     <string name="summary_title">Сводка конфигурации</string>
     <string name="summary_hint">Нажмите на плитку, чтобы перейти к странице SuSFS и отредактировать его.</string>

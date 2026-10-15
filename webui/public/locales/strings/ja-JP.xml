@@ -8,6 +8,25 @@
     <string name="status_binary_missing">ksu_susfs のバイナリが見つかりません</string>
     <string name="status_unknown">不明</string>
     <string name="status_feature_count">%s 機能は有効です</string>
+    <string name="lkm_command_success">LKM コマンドが正常に完了しました</string>
+    <string name="lkm_command_failed">LKM コマンドに失敗しました</string>
+    <string name="lkm_title">SUSFS LKM</string>
+    <string name="lkm_checking">オプショナルなカーネルモジュールを確認中…</string>
+    <string name="lkm_state">LKM：%s；起動時：%s</string>
+    <string name="lkm_loaded">読み込み済み</string>
+    <string name="lkm_installed">インストール済み、読み込み未実施</string>
+    <string name="lkm_missing">未インストール</string>
+    <string name="lkm_enabled">有効</string>
+    <string name="lkm_disabled">無効</string>
+    <string name="lkm_enable">有効化</string>
+    <string name="lkm_disable">無効化</string>
+    <string name="lkm_install">ダウンロードして読み込む</string>
+    <string name="lkm_interfaces">検出されたランタイムインターフェース：%s</string>
+    <string name="lkm_no_interfaces">検出なし</string>
+    <string name="lkm_cli_available">supercall CLI 利用可能</string>
+    <string name="lkm_cli_missing">supercall CLI が存在しません。一部の構成操作は利用できません</string>
+    <string name="lkm_active_partial">SUSFS LKM 稼働中</string>
+    <string name="lkm_no_metadata">バージョン／バリアントのメタデータが利用できません</string>
     <!-- Summary -->
     <string name="summary_title">設定の概要</string>
     <string name="summary_hint">タイルをタップすると、SuSFSページに移動して編集できます。</string>

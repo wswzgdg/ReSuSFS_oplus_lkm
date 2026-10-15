@@ -11,6 +11,25 @@
     <string name="status_unknown">Desconhecido</string>
     <string name="status_kernel_version">SuSFS %s</string>
     <string name="status_feature_count">Funcionalidades %s ativadas</string>
+    <string name="lkm_command_success">Comando LKM concluído com sucesso</string>
+    <string name="lkm_command_failed">O comando LKM falhou</string>
+    <string name="lkm_title">SUSFS LKM</string>
+    <string name="lkm_checking">Verificando módulo de kernel opcional…</string>
+    <string name="lkm_state">LKM: %s; ao iniciar: %s</string>
+    <string name="lkm_loaded">carregado</string>
+    <string name="lkm_installed">instalado, não carregado</string>
+    <string name="lkm_missing">não instalado</string>
+    <string name="lkm_enabled">ativado</string>
+    <string name="lkm_disabled">desativado</string>
+    <string name="lkm_enable">Ativar</string>
+    <string name="lkm_disable">Desativar</string>
+    <string name="lkm_install">Baixar e carregar</string>
+    <string name="lkm_interfaces">Interfaces de tempo de execução detectadas: %s</string>
+    <string name="lkm_no_interfaces">nenhuma detectada</string>
+    <string name="lkm_cli_available">CLI supercall disponível</string>
+    <string name="lkm_cli_missing">CLI supercall ausente; algumas ações de configuração não estão disponíveis</string>
+    <string name="lkm_active_partial">SUSFS LKM ativo</string>
+    <string name="lkm_no_metadata">Metadados de versão/variedade indisponíveis</string>
     <!-- Summary -->
     <string name="summary_title">Resumo de Configuração</string>
     <string name="summary_hint">Toque em um botão para pular para a página de SuSFS e editá-lo.</string>

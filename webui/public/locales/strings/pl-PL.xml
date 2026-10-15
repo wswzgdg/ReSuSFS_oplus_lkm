@@ -8,6 +8,25 @@
     <string name="status_binary_missing">nie znaleziono binarnego ksu_susfs</string>
     <string name="status_unknown">Nieznane</string>
     <string name="status_feature_count">Funkcje %s włączone</string>
+    <string name="lkm_command_success">polecenie LKM zakończone pomyślnie</string>
+    <string name="lkm_command_failed">polecenie LKM nie powiodło się</string>
+    <string name="lkm_title">SUSFS LKM</string>
+    <string name="lkm_checking">Sprawdzanie opcjonalnego modułu jądra…</string>
+    <string name="lkm_state">LKM: %s; przy starcie: %s</string>
+    <string name="lkm_loaded">załadowano</string>
+    <string name="lkm_installed">zainstalowano, nie załadowano</string>
+    <string name="lkm_missing">niezainstalowany</string>
+    <string name="lkm_enabled">włączony</string>
+    <string name="lkm_disabled">wyłączony</string>
+    <string name="lkm_enable">Włącz</string>
+    <string name="lkm_disable">Wyłącz</string>
+    <string name="lkm_install">Pobierz i załaduj</string>
+    <string name="lkm_interfaces">Wykryte interfejsy runtime: %s</string>
+    <string name="lkm_no_interfaces">brak wykrytych</string>
+    <string name="lkm_cli_available">CLI supercall dostępne</string>
+    <string name="lkm_cli_missing">CLI supercall niedostępne; niektóre operacje konfiguracji są niedostępne</string>
+    <string name="lkm_active_partial">SUSFS LKM aktywny</string>
+    <string name="lkm_no_metadata">Metadane wersji/wariantu niedostępne</string>
     <!-- Summary -->
     <string name="summary_title">Podsumowanie konfiguracji</string>
     <string name="summary_hint">Dotknij kafelka, aby przejść do strony SuSFS i edytować ją.</string>

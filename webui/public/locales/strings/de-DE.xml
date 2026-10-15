@@ -8,6 +8,25 @@
     <string name="status_binary_missing">ksu_susfs Binärdatei nicht gefunden</string>
     <string name="status_unknown">Unbekannt</string>
     <string name="status_feature_count">%s Funktionen aktiviert</string>
+    <string name="lkm_command_success">LKM-Befehl erfolgreich ausgeführt</string>
+    <string name="lkm_command_failed">LKM-Befehl fehlgeschlagen</string>
+    <string name="lkm_title">SUSFS LKM</string>
+    <string name="lkm_checking">Optionales Kernelmodul wird überprüft…</string>
+    <string name="lkm_state">LKM: %s; beim Start: %s</string>
+    <string name="lkm_loaded">geladen</string>
+    <string name="lkm_installed">installiert, nicht geladen</string>
+    <string name="lkm_missing">nicht installiert</string>
+    <string name="lkm_enabled">aktiviert</string>
+    <string name="lkm_disabled">deaktiviert</string>
+    <string name="lkm_enable">Aktivieren</string>
+    <string name="lkm_disable">Deaktivieren</string>
+    <string name="lkm_install">Herunterladen und laden</string>
+    <string name="lkm_interfaces">Erkannte Laufzeitinterfaces: %s</string>
+    <string name="lkm_no_interfaces">keines erkannt</string>
+    <string name="lkm_cli_available">supercall CLI verfügbar</string>
+    <string name="lkm_cli_missing">supercall CLI fehlt; einige Konfigurationsoptionen sind nicht verfügbar</string>
+    <string name="lkm_active_partial">SUSFS LKM aktiv</string>
+    <string name="lkm_no_metadata">Versions-/Variantenmetadaten nicht verfügbar</string>
     <!-- Summary -->
     <string name="summary_title">Konfigurationsübersicht</string>
     <string name="summary_hint">Tippe auf eine Kachel, um zur SuSFS-Seite zu springen und sie zu bearbeiten.</string>
