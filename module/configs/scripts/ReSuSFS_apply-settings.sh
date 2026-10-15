@@ -14,9 +14,9 @@ adb_enabled	0
 adb_wifi_enabled	0
 package_verifier_enable	1
 verifier_verify_adb_installs	1
-hidden_api_policy	0
 usb_mass_storage_enabled	0
 EOF
+settings delete global hidden_api_policy
 
 if [ "$(getenforce)" != "Enforcing" ]; then
 	setenforce 1 || echo "[-] setenforce 1 failed"

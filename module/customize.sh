@@ -22,8 +22,14 @@ detect_key_press() {
 	esac
 }
 
-# $PERSISTENT_DIR is never deleted by install or uninstall, so the user's config is
-# kept automatically: no prompt, and nothing to ask when the dir does not exist.
+CONFIGURE=true
+ui_print "[*] Will select NO in 6s if no volume buttons pressed"
+ui_print "[*] Do you want to update the configs?"
+ui_print "[*] VOLUME UP for NO, DOWN for YES"
+if detect_key_press; then
+	CONFIGURE=false
+fi
+
 CONFIG_DIR="$MODPATH/configs"
 
 [ ! -d "$CONFIG_DIR" ] || [ -z "$(ls -A "$CONFIG_DIR" 2>/dev/null)" ] && ui_print "[!] No config files found" && exit 0
@@ -70,7 +76,7 @@ CHANGED_FILES=$(mktemp -p "$PERSISTENT_DIR" '.changed.XXXXXX' 2>/dev/null || pri
 : > "$CHANGED_FILES"
 collect_changed "$CONFIG_DIR" "$PERSISTENT_DIR" "$(get_all_files "$CONFIG_DIR")"
 
-if [ -s "$CHANGED_FILES" ]; then
+if $CONFIGURE && [ -s "$CHANGED_FILES" ]; then
 	ui_print "[*] Changed files:"
 	while IFS= read -r file; do
 		ui_print "    - $file"
