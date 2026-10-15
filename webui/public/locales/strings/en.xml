@@ -23,7 +23,7 @@
     <string name="lkm_disabled">disabled</string>
     <string name="lkm_enable">Enable</string>
     <string name="lkm_disable">Disable</string>
-    <string name="lkm_install">Download / update</string>
+    <string name="lkm_install">Download and load</string>
     <string name="lkm_interfaces">Detected runtime interfaces: %s</string>
     <string name="lkm_no_interfaces">none detected</string>
     <string name="lkm_cli_available">supercall CLI available</string>

@@ -20,7 +20,7 @@
     <string name="lkm_disabled">已禁用</string>
     <string name="lkm_enable">启用</string>
     <string name="lkm_disable">禁用</string>
-    <string name="lkm_install">下载 / 更新</string>
+    <string name="lkm_install">下载并加载</string>
     <string name="lkm_interfaces">运行时检测到的接口：%s</string>
     <string name="lkm_no_interfaces">未检测到接口</string>
     <string name="lkm_cli_available">supercall CLI 可用</string>
