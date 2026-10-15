@@ -18,52 +18,53 @@ trap 'exit 143' TERM
 PATH_BEFORE="$PATH"
 . "$MODPATH/utils.sh"
 PATH="$PATH_BEFORE"
-if download_file "$API" "$WORK/release.json"; then
-    result=$(/data/adb/ksu/bin/busybox awk -v wanted="$NAME" '
-    function get(k,s,t){t=s;if(t !~ "\\\"" k "\\\"[[:space:]]*:")return "";sub(".*\\\"" k "\\\"[[:space:]]*:[[:space:]]*\\\"","",t);sub("\\\".*","",t);return t}
-    /^[[:space:]]*"assets"[[:space:]]*:/ {a=1}
-    a && /^[[:space:]]*\][,]?[[:space:]]*$/ {a=0}
-    a && /^[[:space:]]*\{[[:space:]]*$/ {o=1;n=u=d="";next}
-    o {v=get("name",$0);if(v!="")n=v;v=get("browser_download_url",$0);if(v!="")u=v;v=get("digest",$0);if(v!="")d=v}
-    o && /^[[:space:]]*\}[,]?[[:space:]]*$/ {if(n==wanted){c++;U=u;D=d}o=0}
-    END {if(c==1 && U ~ /^https:\/\/github[.]com\/inforcqb\/(oneplus-susfs4ksu-lkm|susfs4ksu-lkm)\/releases\/download\// && D ~ /^sha256:[0-9a-fA-F]+$/ && length(D)==71)print U " " substr(D,8)}
-    ' "$WORK/release.json")
-    if [ -z "$result" ]; then echo "[!] Release API has no unique exact-KMI asset digest; trying release page" >&2; fi
-else
-    echo "[!] GitHub Releases API unavailable/rate-limited; using latest release page (HTTP fallback)" >&2
-fi
-if [ -n "${result:-}" ]; then
-    URL=${result%% *}; EXPECTED=${result#* }
-else
-    download_file "$REPO/releases/latest" "$WORK/latest.html" || { echo "[x] Cannot read latest release page" >&2; exit 1; }
-    TAG=$(grep -oE "releases/tag/[A-Za-z0-9._-]+" "$WORK/latest.html" | head -n 1 | cut -d/ -f3)
-    [ -n "$TAG" ] || { echo "[x] Cannot determine latest release tag" >&2; exit 1; }
-    download_file "$REPO/releases/expanded_assets/$TAG" "$WORK/assets.html" || { echo "[x] Cannot read release assets" >&2; exit 1; }
-    result=$(/data/adb/ksu/bin/busybox awk -v wanted="$NAME" -v tag="$TAG" '
-    /<li[ >]/ { row=""; inside=1 }
-    inside { row=row $0 " " }
-    inside && /<\/li>/ {
-        inside=0
-        if (index(row, "releases/download/" tag "/" wanted)) {
-            digest=row
-            if (digest !~ "aria-label=\\\"Copy to clipboard digest for " wanted "\\\"") next
-            sub(".*value=\\\"sha256:", "", digest)
-            sub("\\\".*", "", digest)
-            if (length(digest)==64 && digest !~ /[^0-9a-fA-F]/) {
-                path=row
-                sub(".*href=\\\"", "", path)
-                sub("\\\".*", "", path)
-                if (path ~ /^\/inforcqb\/(oneplus-susfs4ksu-lkm|susfs4ksu-lkm)\/releases\/download\//) {
-                    count++; P=path; D=digest
-                }
+download_file "$REPO/releases/latest" "$WORK/latest.html" || { echo "[x] Cannot read latest release page" >&2; exit 1; }
+TAG=$(grep -oE "releases/tag/[A-Za-z0-9._-]+" "$WORK/latest.html" | head -n 1 | cut -d/ -f3)
+[ -n "$TAG" ] || { echo "[x] Cannot determine latest release tag" >&2; exit 1; }
+download_file "$REPO/releases/expanded_assets/$TAG" "$WORK/assets.html" || { echo "[x] Cannot read release assets" >&2; exit 1; }
+result=$(/data/adb/ksu/bin/busybox awk -v wanted="$NAME" -v tag="$TAG" '
+/<li[ >]/ { row=""; inside=1 }
+inside { row=row $0 " " }
+inside && /<\/li>/ {
+    inside=0
+    if (index(row, "releases/download/" tag "/" wanted)) {
+        digest=row
+        if (digest !~ "aria-label=\\\"Copy to clipboard digest for " wanted "\\"") next
+        sub(".*value=\\\"sha256:", "", digest)
+        sub("\\\".*", "", digest)
+        if (length(digest)==64 && digest !~ /[^0-9a-fA-F]/) {
+            path=row
+            sub(".*href=\\\"", "", path)
+            sub("\\\".*", "", path)
+            if (path ~ /^\/inforcqb\/(oneplus-susfs4ksu-lkm|susfs4ksu-lkm)\/releases\/download\//) {
+                count++; P=path; D=digest
             }
         }
     }
-    END { if(count==1) print P " " D }
-    ' "$WORK/assets.html")
-    [ -n "$result" ] || { echo "[x] Exact KMI asset or its SHA-256 digest is missing/ambiguous in latest release $TAG" >&2; exit 1; }
+}
+END { if(count==1) print P " " D }
+' "$WORK/assets.html")
+if [ -n "$result" ]; then
     ASSET_PATH=${result%% *}; EXPECTED=${result#* }
     URL="https://github.com$ASSET_PATH"
+else
+    echo "[!] Release page has no unique exact-KMI asset digest; trying GitHub API" >&2
+    if download_file "$API" "$WORK/release.json"; then
+        result=$(/data/adb/ksu/bin/busybox awk -v wanted="$NAME" '
+        function get(k,s,t){t=s;if(t !~ "\\"" k "\\"[[:space:]]*:")return "";sub(".*\\"" k "\\"[[:space:]]*:[[:space:]]*\\\"", "",t);sub("\\".*","",t);return t}
+        /^[[:space:]]*"assets"[[:space:]]*:/ {a=1}
+        a && /^[[:space:]]*\][,]?[[:space:]]*$/ {a=0}
+        a && /^[[:space:]]*\{[[:space:]]*$/ {o=1;n=u=d="";next}
+        o {v=get("name",$0);if(v!="")n=v;v=get("browser_download_url",$0);if(v!="")u=v;v=get("digest",$0);if(v!="")d=v}
+        o && /^[[:space:]]*\}[,]?[[:space:]]*$/ {if(n==wanted){c++;U=u;D=d}o=0}
+        END {if(c==1 && U ~ /^https:\/\/github[.]com\/inforcqb\/(oneplus-susfs4ksu-lkm|susfs4ksu-lkm)\/releases\/download\// && D ~ /^sha256:[0-9a-fA-F]+$/ && length(D)==71)print U " " substr(D,8)}
+        ' "$WORK/release.json")
+        [ -n "$result" ] || { echo "[x] Cannot find exact-KMI asset with digest in GitHub API" >&2; exit 1; }
+        URL=${result%% *}; EXPECTED=${result#* }
+    else
+        echo "[x] Cannot read GitHub Releases API" >&2
+        exit 1
+    fi
 fi
 case "$URL" in
     https://github.com/inforcqb/oneplus-susfs4ksu-lkm/releases/download/*|https://github.com/inforcqb/susfs4ksu-lkm/releases/download/*) ;;
