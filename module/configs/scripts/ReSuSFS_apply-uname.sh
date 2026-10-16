@@ -6,11 +6,6 @@
 PATH=/data/adb/ksu/bin:/data/data/com.termux/files/usr/bin:$PATH
 
 
-# LKM-only mode check: skip if native SUSFS CLI is unavailable
-if [ -d /sys/module/susfs_guard_lkm ] && [ ! -x /data/adb/ksu/bin/ksu_susfs ]; then
-    echo "[*] LKM-only mode: skipping $(basename "$0") (requires native SUSFS CLI for set_uname)"
-    exit 0
-fi
 
 CONF_FILE="/data/adb/ReSuSFS/tmp_uname.txt"
 

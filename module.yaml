@@ -5,8 +5,8 @@ name: ReSuSFS
 summary: The easiest way to use SuSFS on KernelSU. Strong hiding by default with built-in spoofing and hiding scripts, config files and toggle switches for everyday use, a built-in script manager for power users.
 description: README.md
 license: GPL-3.0-only
-homepage: https://github.com/ahmed-alnassif/ReSuSFS
-support: https://github.com/ahmed-alnassif/ReSuSFS/issues
+homepage: https://github.com/wswzgdg/ReSuSFS_oplus_lkm
+support: https://github.com/wswzgdg/ReSuSFS_oplus_lkm/issues
 tags:
   - automate
   - freedom
@@ -15,6 +15,8 @@ tags:
 icon: assets/icon.png
 metamodule: false
 authors:
+  - name: wswzgdg
+    url: https://github.com/wswzgdg
   - name: ahmed-alnassif
     url: https://github.com/ahmed-alnassif
 compatibility:

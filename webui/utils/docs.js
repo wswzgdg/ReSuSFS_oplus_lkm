@@ -6,7 +6,7 @@ import { marked } from "marked";
 
 const main = "https://raw.githubusercontent.com";
 const mirror = `https://gh.sevencdn.com/${main}`;
-const repo = "ahmed-alnassif/ReSuSFS";
+const repo = "wswzgdg/ReSuSFS_oplus_lkm";
 const branch = "crowdin_docs";
 
 /**

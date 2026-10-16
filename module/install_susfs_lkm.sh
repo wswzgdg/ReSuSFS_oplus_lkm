@@ -1,7 +1,7 @@
 #!/system/bin/sh
 set -eu
-API=https://api.github.com/repos/inforcqb/oneplus-susfs4ksu-lkm/releases/latest
-REPO=https://github.com/inforcqb/oneplus-susfs4ksu-lkm
+API=https://api.github.com/repos/wswzgdg/susfs4ksu-lkm/releases/latest
+REPO=https://github.com/wswzgdg/susfs4ksu-lkm
 DEST=/data/adb/loader/susfs_guard_lkm.ko
 KMI=$(ksud boot-info current-kmi 2>/dev/null) || { echo "[x] Cannot read current KMI" >&2; exit 1; }
 case "$KMI" in android[0-9]*-[0-9]*.[0-9]*) ;; *) echo "[x] Invalid current KMI: $KMI" >&2; exit 1 ;; esac
@@ -36,7 +36,7 @@ inside && /<\/li>/ {
             path=row
             sub(".*href=\042", "", path)
             sub("\042.*", "", path)
-            if (path ~ /^\/inforcqb\/(oneplus-susfs4ksu-lkm|susfs4ksu-lkm)\/releases\/download\//) {
+            if (path ~ /^\/wswzgdg\/susfs4ksu-lkm\/releases\/download\//) {
                 count++; P=path; D=digest
             }
         }
@@ -57,7 +57,7 @@ else
         a && /^[[:space:]]*\{[[:space:]]*$/ {o=1;n=u=d="";next}
         o {v=get("name",$0);if(v!="")n=v;v=get("browser_download_url",$0);if(v!="")u=v;v=get("digest",$0);if(v!="")d=v}
         o && /^[[:space:]]*\}[,]?[[:space:]]*$/ {if(n==wanted){c++;U=u;D=d}o=0}
-        END {if(c==1 && U ~ /^https:\/\/github[.]com\/inforcqb\/(oneplus-susfs4ksu-lkm|susfs4ksu-lkm)\/releases\/download\// && D ~ /^sha256:[0-9a-fA-F]+$/ && length(D)==71)print U " " substr(D,8)}
+        END {if(c==1 && U ~ /^https:\/\/github[.]com\/wswzgdg\/susfs4ksu-lkm\/releases\/download\// && D ~ /^sha256:[0-9a-fA-F]+$/ && length(D)==71)print U " " substr(D,8)}
         ' "$WORK/release.json")
         [ -n "$result" ] || { echo "[x] Cannot find exact-KMI asset with digest in GitHub API" >&2; exit 1; }
         URL=${result%% *}; EXPECTED=${result#* }
@@ -67,7 +67,7 @@ else
     fi
 fi
 case "$URL" in
-    https://github.com/inforcqb/oneplus-susfs4ksu-lkm/releases/download/*|https://github.com/inforcqb/susfs4ksu-lkm/releases/download/*) ;;
+    https://github.com/wswzgdg/susfs4ksu-lkm/releases/download/*) ;;
     *) echo "[x] Unexpected download host or repository" >&2; exit 1 ;;
 esac
 [ -n "$EXPECTED" ] || { echo "[x] No trusted SHA-256 digest for $NAME" >&2; exit 1; }

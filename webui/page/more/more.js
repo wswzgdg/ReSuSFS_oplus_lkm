@@ -42,9 +42,9 @@ function openAboutDialog() {
     const authorLink  = document.getElementById('about-author-link');
     const licenseLink = document.getElementById('about-license-link');
     const repoLink    = document.getElementById('about-repo-link');
-    if (authorLink)  authorLink.onclick  = (e) => { e.preventDefault(); linkRedirect('https://github.com/ahmed-alnassif'); };
+    if (authorLink)  authorLink.onclick  = (e) => { e.preventDefault(); linkRedirect('https://github.com/wswzgdg'); };
     if (licenseLink) licenseLink.onclick = (e) => { e.preventDefault(); linkRedirect('https://www.gnu.org/licenses/gpl-3.0.html'); };
-    if (repoLink)    repoLink.onclick    = (e) => { e.preventDefault(); linkRedirect('https://github.com/ahmed-alnassif/ReSuSFS'); };
+    if (repoLink)    repoLink.onclick    = (e) => { e.preventDefault(); linkRedirect('https://github.com/wswzgdg/ReSuSFS_oplus_lkm'); };
 
     exec(`cat ${moduleDirectory}/module.prop`)
         .then(({ errno, stdout }) => {
@@ -137,7 +137,7 @@ function controlPanelEventlistener() {
     const controlPanel = {
         "language-container": openLanguageMenu,
         "telegram-group": () => linkRedirect('https://t.me/ahmed_alnassif_tg'),
-        "github-issues": () => linkRedirect('https://github.com/ahmed-alnassif/ReSuSFS/issues/new'),
+        "github-issues": () => linkRedirect('https://github.com/wswzgdg/ReSuSFS_oplus_lkm/issues/new'),
         "export": exportConfig,
         "restore": restoreConfig,
         "view-webui-log": openLogViewer,
@@ -162,7 +162,7 @@ export function mount() {
 
 function setupDonateLink() {
     const linkBtn = document.getElementById('donate-link-btn');
-    if (linkBtn) linkBtn.onclick = () => linkRedirect('https://github.com/ahmed-alnassif#-support-my-work');
+    if (linkBtn) linkBtn.onclick = () => linkRedirect('https://github.com/wswzgdg#-support-my-work');
 }
 
 export function onShow() {

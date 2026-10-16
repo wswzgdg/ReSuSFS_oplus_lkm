@@ -7,7 +7,7 @@
     "build": "vite build --emptyOutDir",
     "lint": "eslint . --fix"
   },
-  "author": "ahmed-alnassif",
+  "author": "wswzgdg",
   "license": "GPLv3",
   "type": "module",
   "dependencies": {

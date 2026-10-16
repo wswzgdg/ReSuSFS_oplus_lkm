@@ -63,9 +63,20 @@ susfs() {
         set_hide_modules) printf 'set %s\n' "$2" > /proc/susfs_hide_modules ;;
         hide_sus_mnts_for_non_su_procs)
             case "$2" in 0) printf 'disable\n' > /proc/susfs_hide_mounts ;; 1) printf 'enable\n' > /proc/susfs_hide_mounts ;; *) echo "[x] Expected 0 or 1 for mount hiding" >&2; return 1 ;; esac ;;
-        add_sus_path_loop|add_sus_map|set_uname|set_cmdline_or_bootconfig|show)
-            [ -x "$SUSFS_BIN" ] || { echo "[x] ksu_susfs CLI is required for $1" >&2; return 1; }
-            "$SUSFS_BIN" "$@" ;;
+        add_sus_path_loop) printf 'add %s\n' "$2" > /proc/susfs_path ;;
+        add_sus_map) printf 'add %s\n' "$2" > /proc/susfs_path ;;
+        set_uname)
+            [ -x "$SUSFS_BIN" ] && { "$SUSFS_BIN" "$@"; return; }
+            printf 'add /proc/sys/kernel/osrelease %s\n' "$2" > /proc/susfs_kstat
+            printf 'add /proc/version Linux version %s (%s)\n' "$2" "$3" >> /proc/susfs_kstat ;;
+        set_cmdline_or_bootconfig)
+            [ -x "$SUSFS_BIN" ] && { "$SUSFS_BIN" "$@"; return; }
+            file="$2"; [ -s "$file" ] && {
+                content=$(head -1 "$file")
+                printf 'add /proc/cmdline %s\n' "$content" > /proc/susfs_kstat
+                printf 'add /proc/bootconfig %s\n' "$content" >> /proc/susfs_kstat
+            } ;;
+        show) [ -x "$SUSFS_BIN" ] && "$SUSFS_BIN" "$@" || echo "[x] show not available in LKM mode" ;;
         *) echo "[x] Unsupported by SUSFS LKM: $1"; return 1 ;;
     esac
 }
