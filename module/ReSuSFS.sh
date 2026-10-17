@@ -64,7 +64,7 @@ susfs() {
         hide_sus_mnts_for_non_su_procs)
             case "$2" in 0) printf 'disable\n' > /proc/susfs_hide_mounts ;; 1) printf 'enable\n' > /proc/susfs_hide_mounts ;; *) echo "[x] Expected 0 or 1 for mount hiding" >&2; return 1 ;; esac ;;
         add_sus_path_loop) printf 'add %s\n' "$2" > /proc/susfs_path ;;
-        add_sus_map) printf 'add %s\n' "$2" > /proc/susfs_path ;;
+        add_sus_map) echo "[x] add_sus_map requires ksu_susfs CLI (supercall)" >&2; return 1 ;;
         set_uname)
             [ -x "$SUSFS_BIN" ] && { "$SUSFS_BIN" "$@"; return; }
             printf 'add /proc/sys/kernel/osrelease %s\n' "$2" > /proc/susfs_kstat
