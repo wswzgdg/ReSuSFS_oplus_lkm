@@ -32,17 +32,16 @@ download_file() {
 	# $3-$5 default to the KernelSU paths, so tests can inject stand-ins.
 	local url="$1" out="$2" attempt="${3:-1}" curl="${4:-/system/bin/curl}" busybox="${5:-/data/adb/ksu/bin/busybox}"
 	[ -x "$curl" ] || { echo "[!] Android curl not found at $curl"; return 1; }
+	rm -f "$out"
 	while [ "$attempt" -le 3 ]; do
 		echo "[*] Download attempt $attempt/3: $url"
-		rm -f "$out"
-		code=$("$curl" --silent --show-error --location --connect-timeout 15 --max-time 120 --output "$out" --write-out '%{http_code}' "$url") || code=000
+		code=$("$curl" --silent --show-error --location --connect-timeout 15 --speed-time 30 --speed-limit 1024 --retry 5 --retry-delay 3 --retry-all-errors --continue-at - --output "$out" --write-out '%{http_code}' "$url") || code=000
 		case "$code" in
 			2*)
 				if [ -s "$out" ]; then echo "[+] Download successful"; return 0; fi
 				echo "[-] Download returned an empty file (HTTP $code)" ;;
 			*) echo "[-] Download failed (HTTP $code)" ;;
 		esac
-		rm -f "$out"
 		if ! retryable_code "$code"; then echo "[!] HTTP $code is not retryable"; return 1; fi
 		if [ "$attempt" -lt 3 ]; then echo "[*] Retrying in 3 seconds..."; "$busybox" sleep 3; fi
 		attempt=$((attempt + 1))
