@@ -94,9 +94,7 @@ rm -rf "$CONFIG_DIR"
 
 update_susfs || exit 1
 
-brand=$(getprop ro.product.brand | tr '[:upper:]' '[:lower:]')
-manufacturer=$(getprop ro.product.manufacturer | tr '[:upper:]' '[:lower:]')
-if echo "$brand $manufacturer" | grep -Eq 'oppo|oneplus|realme' && ! "$DEST_BIN_DIR/ksu_susfs" show version >/dev/null 2>&1; then
+if ! "$DEST_BIN_DIR/ksu_susfs" show version >/dev/null 2>&1; then
 	ui_print "[*] No working native ksu_susfs detected. Optional exact-KMI SUSFS LKM download?"
 	ui_print "[*] VOLUME UP to download and load now, DOWN to skip"
 	if detect_key_press; then
