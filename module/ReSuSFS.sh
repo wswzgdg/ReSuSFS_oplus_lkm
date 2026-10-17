@@ -229,7 +229,7 @@ append_to_default() {
 
 apply_sus_paths() { [ -n "$1" ] && { append_to_default "$PERSISTENT_DIR/sus_paths.txt" "$1" || return 1; }; apply_list "$PERSISTENT_DIR/sus_paths.txt" add_sus_path 1; }
 apply_sus_paths_loop() { [ -n "$1" ] && { append_to_default "$PERSISTENT_DIR/sus_paths_loop.txt" "$1" || return 1; }; apply_list "$PERSISTENT_DIR/sus_paths_loop.txt" add_sus_path_loop 0; }
-apply_sus_maps() { [ -n "$1" ] && { append_to_default "$PERSISTENT_DIR/sus_maps.txt" "$1" || return 1; }; apply_list "$PERSISTENT_DIR/sus_maps.txt" add_sus_map 1; }
+apply_sus_maps() { [ -n "$1" ] && { append_to_default "$PERSISTENT_DIR/sus_maps.txt" "$1" || return 1; }; apply_list "$PERSISTENT_DIR/sus_maps.txt" add_sus_map 0; }
 
 apply_kstat() {
 	mode="$1"
