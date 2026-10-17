@@ -1,4 +1,11 @@
 
+## [v26.10.26-lkm] - 2026-10-17
+
+
+### 📦 Other
+
+- bump to v26.10.26-lkm: merge upstream sus_path readlink fix (@wswzgdg)
+
 ## [v26.10.26-lkm] - 2026-10-26
 
 ### 📦 Other
