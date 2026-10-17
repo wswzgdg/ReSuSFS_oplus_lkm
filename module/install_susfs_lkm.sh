@@ -6,7 +6,7 @@ DEST=/data/adb/loader/susfs_guard_lkm.ko
 KMI=$(ksud boot-info current-kmi 2>/dev/null) || { echo "[x] Cannot read current KMI" >&2; exit 1; }
 case "$KMI" in android[0-9]*-[0-9]*.[0-9]*) ;; *) echo "[x] Invalid current KMI: $KMI" >&2; exit 1 ;; esac
 case "$KMI" in *[!a-zA-Z0-9._-]*) echo "[x] Invalid current KMI" >&2; exit 1 ;; esac
-NAME=susfs_guard_lkm-$KMI.ko
+NAME=susfs_guard_lkm-$KMI.ko.gz
 WORK=$(/system/bin/mktemp -d /data/local/tmp/resusfs-lkm.XXXXXX) || { echo "[x] Cannot create a private temporary directory" >&2; exit 1; }
 trap 'rm -rf "$WORK"' EXIT
 trap 'exit 129' HUP
@@ -77,7 +77,10 @@ ACTUAL=$(/system/bin/sha256sum "$WORK/$NAME" | cut -d' ' -f1)
 if [ "${1:-}" = --dry-run ]; then echo "[+] Verified $NAME from latest release; SHA-256 $ACTUAL (dry run, not installed)"; exit 0; fi
 mkdir -p "$(dirname "$DEST")"
 printf '%s\n' "$KMI" > "$WORK/current-kmi"
-chmod 0644 "$WORK/$NAME" "$WORK/current-kmi"
-mv -f "$WORK/$NAME" "$DEST"
+# decompress .ko.gz -> .ko, verify the inner file exists
+/system/bin/gzip -dc "$WORK/$NAME" > "$WORK/${NAME%.gz}" || { echo "[x] gzip decompress failed" >&2; exit 1; }
+[ -s "$WORK/${NAME%.gz}" ] || { echo "[x] Decompressed .ko is empty" >&2; exit 1; }
+chmod 0644 "$WORK/${NAME%.gz}" "$WORK/current-kmi"
+mv -f "$WORK/${NAME%.gz}" "$DEST"
 mv -f "$WORK/current-kmi" "$DEST.kmi"
-echo "[+] Installed $NAME after HTTPS and SHA-256 verification"
+echo "[+] Installed ${NAME%.gz} after HTTPS and SHA-256 verification"
