@@ -7,6 +7,11 @@ KMI=$(ksud boot-info current-kmi 2>/dev/null) || { echo "[x] Cannot read current
 case "$KMI" in android[0-9]*-[0-9]*.[0-9]*) ;; *) echo "[x] Invalid current KMI: $KMI" >&2; exit 1 ;; esac
 case "$KMI" in *[!a-zA-Z0-9._-]*) echo "[x] Invalid current KMI" >&2; exit 1 ;; esac
 NAME=susfs_guard_lkm-$KMI.ko.gz
+# Skip download if the .ko is already installed, loaded, and matches the current KMI
+if [ -f "$DEST" ] && [ -f "$DEST.kmi" ] && [ "$(cat "$DEST.kmi" 2>/dev/null)" = "$KMI" ] && [ -d /sys/module/susfs_guard_lkm ]; then
+    echo "[+] LKM already installed for $KMI and loaded; skipping download"
+    exit 0
+fi
 WORK=$(/system/bin/mktemp -d /data/local/tmp/resusfs-lkm.XXXXXX) || { echo "[x] Cannot create a private temporary directory" >&2; exit 1; }
 trap 'rm -rf "$WORK"' EXIT
 trap 'exit 129' HUP
@@ -71,9 +76,27 @@ case "$URL" in
     *) echo "[x] Unexpected download host or repository" >&2; exit 1 ;;
 esac
 [ -n "$EXPECTED" ] || { echo "[x] No trusted SHA-256 digest for $NAME" >&2; exit 1; }
-download_file "$URL" "$WORK/$NAME" || { echo "[x] Asset download failed" >&2; exit 1; }
-ACTUAL=$(/system/bin/sha256sum "$WORK/$NAME" | cut -d' ' -f1)
-[ "$ACTUAL" = "$EXPECTED" ] || { echo "[x] SHA-256 mismatch" >&2; exit 1; }
+# Try multiple download URLs: direct GitHub, then mirrors (for slow/blocked connections)
+MIRRORS="
+$URL
+https://ghproxy.com/$URL
+https://mirror.ghproxy.com/$URL
+https://gh.llkk.cc/$URL
+"
+DOWNLOADED=false
+for URL_TRY in $MIRRORS; do
+    echo "[*] Trying: $URL_TRY"
+    if download_file "$URL_TRY" "$WORK/$NAME"; then
+        ACTUAL=$(/system/bin/sha256sum "$WORK/$NAME" | cut -d' ' -f1)
+        if [ "$ACTUAL" = "$EXPECTED" ]; then
+            DOWNLOADED=true
+            break
+        fi
+        echo "[!] SHA-256 mismatch from $URL_TRY, trying next mirror" >&2
+        rm -f "$WORK/$NAME"
+    fi
+done
+[ "$DOWNLOADED" = true ] || { echo "[x] All download attempts failed" >&2; exit 1; }
 if [ "${1:-}" = --dry-run ]; then echo "[+] Verified $NAME from latest release; SHA-256 $ACTUAL (dry run, not installed)"; exit 0; fi
 mkdir -p "$(dirname "$DEST")"
 printf '%s\n' "$KMI" > "$WORK/current-kmi"
